@@ -274,22 +274,3 @@ space-intelligence-agent/
 ├── .env.example          # Environment variable template
 └── README.md
 ```
-
----
-
-## Roadmap
-
-| Phase | Focus |
-|-------|-------|
-| **Phase 1** ✅ | RAG pipeline, hybrid search, evaluation, deployment |
-| **Phase 2** | Fine-tuning embedding and generation models on space-domain data |
-| **Phase 3** | Agentic capabilities (multi-step reasoning, tool use) |
-| **Phase 4** | Multimodal processing (diagrams, charts, imagery) |
-
----
-
-## Author
-
-**Juan Castillo** — ML Engineer | Deep Learning | MLOps
-
-*Physics graduate → ML Engineer (anomaly detection, cybersecurity) → Intelligent systems for the space/defence sector.*
