@@ -20,6 +20,17 @@ services:
       timeout: 5s
       retries: 5
 
+  migrator:
+    build:
+      context: .
+      dockerfile: docker/migrator.dockerfile
+    container_name: space-migrator
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    restart: "no"
+
   dev:
     build:
       context: .
@@ -28,8 +39,8 @@ services:
     tty: true
     container_name: dev
     depends_on:
-      db:
-        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     env_file: .env
     volumes:
       - .:/opt/project

@@ -1,4 +1,4 @@
-.PHONY: install dev lint format test test-cov ingest query evaluate up down build shell clean
+.PHONY: install dev lint format test test-cov ingest query evaluate up down build shell clean migrate seed
 
 install:
 	pip install -r requirements/requirements.txt
@@ -29,6 +29,13 @@ query:
 
 evaluate:
 	python -m evaluation.run
+
+# ── Database ──
+migrate:
+	alembic upgrade head
+
+seed:
+	python scripts/seed.py
 
 # ── Docker ──
 build:
