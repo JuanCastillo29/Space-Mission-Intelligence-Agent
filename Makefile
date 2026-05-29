@@ -1,4 +1,4 @@
-.PHONY: install dev lint format test test-cov ingest query evaluate up down build shell clean
+.PHONY: install dev lint format test test-cov ingest query evaluate up down build shell clean migrate seed
 
 install:
 	pip install -r requirements/requirements.txt
@@ -9,7 +9,7 @@ dev:
 lint:
 	ruff check .
 	ruff format --check .
-	mypy app ingestion retrieval generation evaluation --ignore-missing-imports
+	mypy db scripts --ignore-missing-imports
 
 format:
 	ruff check --fix .
@@ -29,6 +29,13 @@ query:
 
 evaluate:
 	python -m evaluation.run
+
+# ── Database ──
+migrate:
+	alembic upgrade head
+
+seed:
+	python scripts/seed.py
 
 # ── Docker ──
 build:
