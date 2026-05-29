@@ -4,6 +4,7 @@ Revision ID: 001
 Revises:
 Create Date: 2025-05-26
 """
+
 from typing import Sequence, Union
 
 from alembic import op

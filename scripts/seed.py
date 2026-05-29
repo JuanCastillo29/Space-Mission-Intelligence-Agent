@@ -38,7 +38,9 @@ def download_seed_files(dest_dir: Path) -> dict[str, Path]:
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:
-        logger.error("huggingface_hub is not installed. Run: pip install huggingface_hub")
+        logger.error(
+            "huggingface_hub is not installed. Run: pip install huggingface_hub"
+        )
         sys.exit(1)
 
     paths: dict[str, Path] = {}
@@ -83,7 +85,9 @@ def load_documents(session: Session, path: Path) -> dict[str, uuid.UUID]:
     return checksum_to_id
 
 
-def load_chunks(session: Session, path: Path, checksum_to_id: dict[str, uuid.UUID]) -> None:
+def load_chunks(
+    session: Session, path: Path, checksum_to_id: dict[str, uuid.UUID]
+) -> None:
     """Load chunks, resolving document references by checksum."""
     with open(path) as f:
         rows = json.load(f)
@@ -91,7 +95,10 @@ def load_chunks(session: Session, path: Path, checksum_to_id: dict[str, uuid.UUI
     for row in rows:
         doc_id = checksum_to_id.get(row["document_checksum"])
         if doc_id is None:
-            logger.warning("Skipping chunk — unknown document checksum: %s", row["document_checksum"])
+            logger.warning(
+                "Skipping chunk — unknown document checksum: %s",
+                row["document_checksum"],
+            )
             continue
 
         chunk = Chunk(
