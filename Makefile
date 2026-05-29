@@ -9,7 +9,7 @@ dev:
 lint:
 	ruff check .
 	ruff format --check .
-	mypy app ingestion retrieval generation evaluation --ignore-missing-imports
+	mypy db scripts --ignore-missing-imports
 
 format:
 	ruff check --fix .

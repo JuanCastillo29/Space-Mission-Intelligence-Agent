@@ -22,9 +22,6 @@ EMBEDDING_DIM = 1024
 def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-    source_type = sa.Enum("pdf", "html", "json", "tle", "csv", name="source_type")
-    source_type.create(op.get_bind())
-
     op.create_table(
         "documents",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
@@ -32,7 +29,7 @@ def upgrade() -> None:
         sa.Column("source_url", sa.Text),
         sa.Column(
             "source_type",
-            sa.Enum("pdf", "html", "json", "tle", "csv", name="source_type", create_constraint=False),
+            sa.Enum("pdf", "html", "json", "tle", "csv", name="source_type"),
             nullable=False,
         ),
         sa.Column("mission_name", sa.String(256)),

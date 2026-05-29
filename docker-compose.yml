@@ -31,13 +31,13 @@ services:
     env_file: .env
     restart: "no"
 
-  dev:
+  dev_space:
     build:
       context: .
       dockerfile: docker/dev.dockerfile
     command: /bin/bash
     tty: true
-    container_name: dev
+    container_name: dev_space
     depends_on:
       migrator:
         condition: service_completed_successfully
