@@ -43,7 +43,12 @@ class Document(Base):
     title: Mapped[str] = mapped_column(Text, nullable=False)
     source_url: Mapped[str | None] = mapped_column(Text)
     source_type: Mapped[SourceType] = mapped_column(
-        Enum(SourceType, name="source_type", create_constraint=True),
+        Enum(
+            SourceType,
+            name="source_type",
+            create_constraint=True,
+            values_callable=lambda e: [member.value for member in e],
+        ),
         nullable=False,
     )
     mission_name: Mapped[str | None] = mapped_column(String(256))
