@@ -8,14 +8,14 @@ import json
 import logging
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import create_engine, func, select, text
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from db.config import db_settings
-from db.models import Base, Chunk, Document, Satellite
+from db.models import Chunk, Document, Satellite
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 logger = logging.getLogger(__name__)
