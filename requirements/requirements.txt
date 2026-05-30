@@ -5,3 +5,4 @@ alembic>=1.14
 pydantic-settings>=2.6
 psycopg2-binary>=2.9
 huggingface_hub>=0.27
+PyMuPDF>=1.24
