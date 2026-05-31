@@ -21,6 +21,7 @@ import fitz
 import json
 import statistics
 import argparse
+import numpy as np
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -84,27 +85,35 @@ class ExtractionReport:
     page_results: list = field(default_factory=list)
 
 def get_text_blocks(page: fitz.Page, vmargin_pct: float = 0.05) -> list[TextBlock]:
-    """
-    Extract text blocks from a page.
-    Filterts out headers/footers based on vertical position
-    """
-
-    page_width = page.rect.width
     page_height = page.rect.height
-
     top_margin = page_height * vmargin_pct
-    bottom_margin = page_height * (1-vmargin_pct)
+    bottom_margin = page_height * (1 - vmargin_pct)
+
+    # Build tight bboxes from word-level glyph positions
+    word_bboxes = {}
+    for w in page.get_text("words"):
+        # w = (x0, y0, x1, y1, text, block_no, line_no, word_no)
+        bno = w[5]
+        if bno not in word_bboxes:
+            word_bboxes[bno] = [w[0], w[1], w[2], w[3]]
+        else:
+            word_bboxes[bno][0] = min(word_bboxes[bno][0], w[0])
+            word_bboxes[bno][1] = min(word_bboxes[bno][1], w[1])
+            word_bboxes[bno][2] = max(word_bboxes[bno][2], w[2])
+            word_bboxes[bno][3] = max(word_bboxes[bno][3], w[3])
 
     blocks = []
-    raw_dict = page.get_text("dict", flags = fitz.TEXT_PRESERVE_WHITESPACE)
+    raw_dict = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE)
 
-    for block in raw_dict.get("blocks", []):
-        # Skip image
+    for block_idx, block in enumerate(raw_dict.get("blocks", [])):
         if block.get("type") != 0:
             continue
 
-        bbox = block["bbox"]
-        x0, y0, x1, y1 = bbox
+        # Use word-level tight bbox if available, fall back to block bbox
+        if block_idx in word_bboxes:
+            x0, y0, x1, y1 = word_bboxes[block_idx]
+        else:
+            x0, y0, x1, y1 = block["bbox"]
 
         is_hf = y0 < top_margin or y1 > bottom_margin
 
@@ -185,8 +194,10 @@ def _find_column_gaps(blocks: list[TextBlock], page_width: float,
 
 
 def detect_columns(blocks: list[TextBlock], page_width: float,
+                   body_font_size : float,
                    min_gap_pct: float = 0.03,
-                   full_width_pct: float = 0.6) -> dict:
+                   full_width_pct: float = 0.6,
+                   font_tolerance: float = 0.15) -> dict:
     """
     Detect N-column layout by finding all significant vertical gaps.
 
@@ -200,6 +211,10 @@ def detect_columns(blocks: list[TextBlock], page_width: float,
         full_width_blocks : list[TextBlock]  – blocks spanning most of the page
     """
     content_blocks = [b for b in blocks if b.block_type == "text"]
+    body_blocks = [
+        b for b in content_blocks
+        if abs(b.font_size - body_font_size) / body_font_size < font_tolerance
+    ]
 
     def _single(blks: list[TextBlock]) -> dict:
         return {
@@ -210,22 +225,11 @@ def detect_columns(blocks: list[TextBlock], page_width: float,
             "full_width_blocks": [],
         }
 
-    if len(content_blocks) < 2:
+    if len(body_blocks) < 2:
         return _single(content_blocks)
 
-    # Separate full-width blocks before gap analysis so wide titles /
-    # abstracts don't mask the gaps between columns.
-    full_width_threshold = page_width * full_width_pct
-    full_width_blocks = [b for b in content_blocks
-                         if b.width > full_width_threshold]
-    narrow_blocks = [b for b in content_blocks
-                     if b.width <= full_width_threshold]
-
-    if len(narrow_blocks) < 2:
-        return _single(content_blocks)
-
-    gaps = _find_column_gaps(narrow_blocks, page_width, min_gap_pct)
-
+    gaps = _find_column_gaps(body_blocks, page_width, min_gap_pct)
+    print(gaps)
     if not gaps:
         return _single(content_blocks)
 
@@ -235,12 +239,20 @@ def detect_columns(blocks: list[TextBlock], page_width: float,
 
     # Assign narrow blocks to columns based on center_x
     columns: list[list[TextBlock]] = [[] for _ in range(num_columns)]
-    for block in narrow_blocks:
-        col_idx = 0
+    full_width_blocks: list[TextBlock] = []
+
+    for block in content_blocks:
+        start_col = 0
+        end_col = 0
         for i, boundary in enumerate(boundaries):
-            if block.center_x >= boundary:
-                col_idx = i + 1
-        columns[col_idx].append(block)
+            if block.x0 >= boundary:
+                start_col = i+1
+            if block.x1 >= boundary:
+                end_col = i+1
+        if start_col == end_col:
+            columns[start_col].append(block)
+        else:
+            full_width_blocks.append(block)
 
     # Sort each column top-to-bottom
     for col in columns:
@@ -288,19 +300,17 @@ def assemble_reading_order(column_info: dict) -> list[TextBlock]:
     full_width_blocks = column_info.get("full_width_blocks", [])
     ordered: list[TextBlock] = []
 
-    breakpoints = sorted([(b.y0, b) for b in full_width_blocks])
+    breakpoints = sorted([(b.y0, i, b) for i, b in enumerate(full_width_blocks)])
 
     if not breakpoints:
-        # No full-width blocks: read each column top-to-bottom, left to right
         for col in columns:
             ordered.extend(col)
         return ordered
 
-    # Interleave column sections with full-width blocks
     prev_y = 0
-    for bp_y, fw_block in breakpoints:
+    for bp_y, _, fw_block in breakpoints:
         for col in columns:
-            section = [b for b in col if prev_y <= b.y0 < bp_y]
+            section = [b for b in col if prev_y < b.y0 < bp_y]
             ordered.extend(section)
         ordered.append(fw_block)
         prev_y = bp_y
@@ -323,7 +333,7 @@ def detect_headings(blocks: list[TextBlock], body_font_size: float) -> list[Text
 
         if block.font_size > body_font_size * 1.2:
             is_heading = True
-        if block.is_bold and len(block.text) < 100:
+        if block.is_bold and 5 < len(block.text) < 100:
             is_heading = True
 
         if is_heading:
@@ -361,10 +371,8 @@ def extract_page(page: fitz.Page, page_num: int) -> PageResult:
         )
 
     body_size = get_body_font_size(blocks)
-
     content_blocks = [b for b in blocks if b.block_type != "header_footer"]
-
-    column_info = detect_columns(content_blocks, page.rect.width)
+    column_info = detect_columns(content_blocks, page.rect.width, body_size)
 
     ordered_blocks = assemble_reading_order(column_info)
 
