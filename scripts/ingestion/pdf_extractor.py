@@ -159,12 +159,16 @@ def get_text_blocks(page: fitz.Page, vmargin_pct: float = 0.05) -> list[TextBloc
     return blocks
 
 def _find_column_gaps(blocks: list[TextBlock], page_width: float,
-                      min_gap_pct: float = 0.03) -> list[dict]:
+                      min_gap_pct: float = 0.01,
+                      max_gap_abs: float = 20.0) -> list[dict]:
     """
     Find all significant vertical whitespace gaps that may separate columns.
 
     Merges overlapping block x-ranges first, then returns every gap whose
-    width exceeds *min_gap_pct* of the page width.
+    width exceeds a threshold.  The threshold is the *smaller* of
+    ``page_width * min_gap_pct`` and ``max_gap_abs`` (in points), so that
+    narrow gutters on wide pages (spreads, landscape) are still detected.
+    A floor of 6pt prevents inter-word noise from triggering false gaps.
     """
     if not blocks:
         return []
@@ -178,7 +182,10 @@ def _find_column_gaps(blocks: list[TextBlock], page_width: float,
         else:
             merged.append([start, end])
 
-    min_gap = page_width * min_gap_pct
+    # Adaptive threshold: percentage-based but capped so wide pages
+    # don't require impossibly large gutters.  Floor at 6pt to avoid noise.
+    min_gap = max(6.0, min(page_width * min_gap_pct, max_gap_abs))
+
     gaps = []
     for i in range(len(merged) - 1):
         gap_start = merged[i][1]
@@ -196,7 +203,7 @@ def _find_column_gaps(blocks: list[TextBlock], page_width: float,
 
 def detect_columns(blocks: list[TextBlock], page_width: float,
                    body_font_size : float,
-                   min_gap_pct: float = 0.03,
+                   min_gap_pct: float = 0.01,
                    full_width_pct: float = 0.6,
                    font_tolerance: float = 0.15) -> dict:
     """
@@ -323,6 +330,69 @@ def assemble_reading_order(column_info: dict) -> list[TextBlock]:
 
     return ordered
 
+def merge_split_paragraphs(blocks: list[TextBlock],
+                           body_font_size: float,
+                           max_y_gap_factor: float = 1.8,
+                           x_overlap_pct: float = 0.5) -> list[TextBlock]:
+    """
+    Merge consecutive blocks that are part of the same paragraph but were
+    split by PyMuPDF (e.g. across column breaks or mid-sentence).
+
+    Two adjacent blocks are merged when:
+      - They have similar font size (within 15% of body size)
+      - Their x-ranges overlap significantly (shared column)
+      - The vertical gap between them is small (< max_y_gap_factor * font size)
+      - The first block's text does NOT end with sentence-ending punctuation
+        (indicating the sentence continues in the next block)
+    """
+    if not blocks:
+        return []
+
+    merged = [blocks[0]]
+    for block in blocks[1:]:
+        prev = merged[-1]
+
+        # Same font size ballpark?
+        font_similar = (
+            abs(prev.font_size - block.font_size) < body_font_size * 0.15
+        )
+
+        # Significant x-overlap (same column)?
+        overlap_start = max(prev.x0, block.x0)
+        overlap_end = min(prev.x1, block.x1)
+        overlap = max(0, overlap_end - overlap_start)
+        min_width = min(prev.width, block.width) or 1
+        x_overlaps = overlap / min_width > x_overlap_pct
+
+        # Close vertically?
+        y_gap = block.y0 - prev.y1
+        close_y = 0 <= y_gap < body_font_size * max_y_gap_factor
+
+        # Previous block ends mid-sentence?
+        prev_text = prev.text.rstrip()
+        ends_mid_sentence = (
+            prev_text and prev_text[-1] not in ".!?:;\n" and not prev.is_bold
+        )
+
+        if font_similar and x_overlaps and close_y and ends_mid_sentence:
+            # Merge: concatenate text, expand bounding box
+            merged[-1] = TextBlock(
+                text=prev.text.rstrip() + " " + block.text.lstrip(),
+                x0=min(prev.x0, block.x0),
+                y0=prev.y0,
+                x1=max(prev.x1, block.x1),
+                y1=block.y1,
+                font_size=prev.font_size,
+                font_name=prev.font_name,
+                is_bold=prev.is_bold,
+                block_type=prev.block_type,
+            )
+        else:
+            merged.append(block)
+
+    return merged
+
+
 def detect_headings(blocks: list[TextBlock], body_font_size: float) -> list[TextBlock]:
     """
     Classify blocks as headings based on font size and style.
@@ -438,6 +508,9 @@ def extract_page(page: fitz.Page, page_num: int) -> PageResult:
     column_info = detect_columns(content_blocks, page.rect.width, body_size)
 
     ordered_blocks = assemble_reading_order(column_info)
+
+    # Merge blocks that are split mid-paragraph by PyMuPDF
+    ordered_blocks = merge_split_paragraphs(ordered_blocks, body_size)
 
     headings = detect_headings(ordered_blocks, body_size)
 
