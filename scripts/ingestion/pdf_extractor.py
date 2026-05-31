@@ -17,6 +17,7 @@ Usage:
     python pdf_extractor.py input.pdf [--output output.md] [--report]
 """
 
+import re
 import fitz
 import json
 import statistics
@@ -229,7 +230,7 @@ def detect_columns(blocks: list[TextBlock], page_width: float,
         return _single(content_blocks)
 
     gaps = _find_column_gaps(body_blocks, page_width, min_gap_pct)
-    print(gaps)
+
     if not gaps:
         return _single(content_blocks)
 
@@ -355,6 +356,68 @@ def get_body_font_size(blocks: list[TextBlock]) -> float:
         size_counts[rounded] = size_counts.get(rounded, 0) + 1
     return max(size_counts, key=size_counts.get)
 
+# Each pattern matches a single line of text that should be removed.
+
+_NOISE_LINE_PATTERNS = re.compile(
+    r"(?i)"
+    r"^copyright\s*©.*|"
+    r"^©\s*.+|"
+    r"^ISBN\s*.*|"
+    r"^ISSN\s*.*|"
+    r"^[\d\-\s]{5,20}$|"
+    r"^(author|designer|editor|production\s*editor|cover\s*image)\s*[\t ]*.*|"
+    r"^an\s+esa\s+production$|"
+    r"^[A-Z]{2,4}[-/]\d{2,4}.*|"
+    r"^(credit|image|photo|source|spacecraft)\s*:.*|"
+    r"^\(?(ESA|NASA|JPL|ATG\s*medialab)[/&,;\s\w()]*\)?\s*$|"
+    r"^[\w\s]+\((ESA|NASA|JPL)[/&,;\s\w()]*\)(,\s*[\w\s]+\([/&,;\s\w()]*\))*\s*$|"
+    r"^.{3,60}[\t ]{2,}\d{1,3}\s*$"
+)
+
+_ROLE_LABEL = re.compile(
+    r"(?i)^(author|designer|editor|production\s*editor|cover\s*image)\s*$"
+)
+
+
+def clean_extracted_text(text: str) -> str:
+    """
+    Remove metadata, image credits, TOC entries, and colophon sections
+    from extracted page text via line-level filtering.
+
+    Works in two passes:
+      1. Remove any line that directly matches a noise pattern.
+      2. Remove orphan "value" lines that followed a role label
+         (e.g. "Stuart Clark" after "Author").
+    """
+    lines = text.splitlines()
+    cleaned = []
+    skip_next_value = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        if not stripped:
+            skip_next_value = False
+            cleaned.append(line)
+            continue
+
+        if _NOISE_LINE_PATTERNS.match(stripped):
+            if _ROLE_LABEL.match(stripped):
+                skip_next_value = True
+            continue
+
+        if skip_next_value:
+            skip_next_value = False
+            if len(stripped) < 60:
+                continue
+
+        skip_next_value = False
+        cleaned.append(line)
+
+    result = re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned))
+    return result.strip()
+
+
 def extract_page(page: fitz.Page, page_num: int) -> PageResult:
     """
     Extract a single page with colum-aware reading order
@@ -394,6 +457,8 @@ def extract_page(page: fitz.Page, page_num: int) -> PageResult:
             lines.append(block.text.strip())
 
     raw_text = "\n".join(lines)
+
+    raw_text = clean_extracted_text(raw_text)
 
     return PageResult(
         page_num=page_num,
