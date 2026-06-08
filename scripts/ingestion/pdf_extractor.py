@@ -123,6 +123,8 @@ def fix_heading_spaces(page: fitz.Page, block: TextBlock) -> str:
         if blk.get("type") != 0:
             continue
         for line in blk.get("lines", []):
+            if not _line_matches_heading(line, block.font_size, block.is_bold):
+                continue
             line_chars = []
             for span in line.get("spans", []):
                 font_size = span.get("size", 10)
@@ -144,6 +146,32 @@ def fix_heading_spaces(page: fitz.Page, block: TextBlock) -> str:
     if not lines_out:
         return block.text
     return '\n'.join(lines_out)
+
+
+def _line_matches_heading(line: dict, heading_size: float,
+                          heading_bold: bool) -> bool:
+    """Check if a raw-dict line matches the expected heading font."""
+    spans = line.get("spans", [])
+    if not spans:
+        return False
+    for span in spans:
+        has_content = (
+            span.get("text", "").strip()
+            or any(c.get("c", "").strip() for c in span.get("chars", []))
+        )
+        if not has_content:
+            continue
+        span_bold = (
+            "bold" in span.get("font", "").lower()
+            or span.get("flags", 0) & 2**4
+        )
+        span_size = span.get("size", 0)
+        size_close = abs(span_size - heading_size) < heading_size * 0.2
+        if heading_bold and not span_bold:
+            return False
+        if not size_close:
+            return False
+    return True
 
 
 def _join_reflow(parts: list[str]) -> str:
@@ -550,49 +578,112 @@ def get_text_blocks(page: fitz.Page, vmargin_pct: float = 0.05) -> list[TextBloc
             x0, y0, x1, y1 = block["bbox"]
 
         is_hf = y0 < top_margin or y1 > bottom_margin
-
-        full_text = ""
-        font_sizes = []
-        font_names = []
-        bold_count = 0
-        total_spans = 0
-
-        for line in block.get("lines", []):
-            line_text = ""
-            for span in line.get("spans", []):
-                span_text = span.get("text", "")
-                line_text += span_text
-                font_sizes.append(span.get("size", 0))
-                font_names.append(span.get("font", ""))
-                total_spans += 1
-                if "bold" in span.get("font", "").lower() or span.get("flags", 0) & 2**4:
-                    bold_count += 1
-
-            full_text += line_text + "\n"
-            if not full_text:
-                continue
-        full_text = full_text.strip()
-        if not full_text:
-            continue
-
-        full_text = rejoin_hyphenated_words(full_text)
-        full_text = reflow_block_text(full_text)
-
-        avg_font_size = statistics.mean(font_sizes) if font_sizes else 0.0
-        dominant_font = max(set(font_names), key=font_names.count) if font_names else None
-        is_bold = bold_count > total_spans / 2 if total_spans > 0 else False
-
         block_type = "header_footer" if is_hf else "text"
 
-        blocks.append(TextBlock(
-            text=full_text,
-            x0=x0, y0=y0, x1=x1, y1=y1,
-            font_size=avg_font_size,
-            font_name=dominant_font,
-            is_bold=is_bold,
-            block_type=block_type
-        ))
+        line_groups = _split_block_lines(block.get("lines", []))
+        for group in line_groups:
+            full_text = ""
+            font_sizes = []
+            font_names = []
+            bold_count = 0
+            total_spans = 0
+            g_y0 = g_y1 = None
+
+            for line in group:
+                lbbox = line.get("bbox", (x0, y0, x1, y1))
+                if g_y0 is None:
+                    g_y0 = lbbox[1]
+                g_y1 = lbbox[3]
+
+                line_text = ""
+                for span in line.get("spans", []):
+                    span_text = span.get("text", "")
+                    line_text += span_text
+                    font_sizes.append(span.get("size", 0))
+                    font_names.append(span.get("font", ""))
+                    total_spans += 1
+                    span_font = span.get("font", "").lower()
+                    span_flags = span.get("flags", 0)
+                    if "bold" in span_font or span_flags & 2**4:
+                        bold_count += 1
+
+                full_text += line_text + "\n"
+
+            full_text = full_text.strip()
+            if not full_text:
+                continue
+
+            full_text = rejoin_hyphenated_words(full_text)
+            full_text = reflow_block_text(full_text)
+
+            avg_font_size = (
+                statistics.mean(font_sizes) if font_sizes else 0.0
+            )
+            dominant_font = (
+                max(set(font_names), key=font_names.count)
+                if font_names else None
+            )
+            is_bold = (
+                bold_count > total_spans / 2 if total_spans > 0
+                else False
+            )
+
+            blocks.append(TextBlock(
+                text=full_text,
+                x0=x0, y0=g_y0 or y0, x1=x1, y1=g_y1 or y1,
+                font_size=avg_font_size,
+                font_name=dominant_font,
+                is_bold=is_bold,
+                block_type=block_type,
+            ))
     return blocks
+
+
+def _split_block_lines(lines: list[dict]) -> list[list[dict]]:
+    """Split a PyMuPDF block's lines into groups at font-change boundaries.
+
+    When a single PyMuPDF block contains lines with different font
+    characteristics (e.g. a bold heading followed by body text), this splits
+    them so each group can become its own TextBlock with accurate metadata.
+    """
+    if len(lines) <= 1:
+        return [lines] if lines else []
+
+    groups: list[list[dict]] = []
+    current: list[dict] = [lines[0]]
+    prev_bold, prev_size = _line_font_info(lines[0])
+
+    for line in lines[1:]:
+        cur_bold, cur_size = _line_font_info(line)
+        bold_changed = cur_bold != prev_bold
+        size_changed = prev_size > 0 and abs(cur_size - prev_size) / prev_size > 0.15
+        if bold_changed or size_changed:
+            groups.append(current)
+            current = [line]
+        else:
+            current.append(line)
+        prev_bold = cur_bold
+        prev_size = cur_size
+
+    if current:
+        groups.append(current)
+    return groups
+
+
+def _line_font_info(line: dict) -> tuple[bool, float]:
+    """Return (is_bold, avg_font_size) for a single line dict."""
+    spans = line.get("spans", [])
+    if not spans:
+        return False, 0.0
+    bold_count = 0
+    sizes = []
+    for span in spans:
+        sizes.append(span.get("size", 0))
+        if "bold" in span.get("font", "").lower() or span.get("flags", 0) & 2**4:
+            bold_count += 1
+    is_bold = bold_count > len(spans) / 2
+    avg_size = statistics.mean(sizes) if sizes else 0.0
+    return is_bold, avg_size
 
 
 # ---------------------------------------------------------------------------
@@ -773,7 +864,8 @@ def merge_split_paragraphs(blocks: list[TextBlock],
         next_starts_bullet = _BULLET_RE.match(block.text.lstrip())
 
         if (font_similar and x_overlaps and close_y
-                and ends_mid_sentence and not next_starts_bullet):
+                and ends_mid_sentence and not next_starts_bullet
+                and not block.is_bold):
             prev_stripped = prev.text.rstrip()
             if prev_stripped.endswith('-'):
                 merged_text = prev_stripped[:-1] + block.text.lstrip()
