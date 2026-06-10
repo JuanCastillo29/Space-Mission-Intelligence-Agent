@@ -38,8 +38,7 @@ htmlcov/
 docker/volumes/
 
 # Data (downloaded corpora — not tracked)
-data/raw/
-data/processed/
+data/
 
 # Jupyter
 .ipynb_checkpoints/

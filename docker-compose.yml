@@ -31,6 +31,18 @@ services:
     env_file: .env
     restart: "no"
 
+  ingestion:
+    build:
+      context: .
+      dockerfile: docker/ingestion.dockerfile
+    container_name: space-ingestion
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    env_file: .env
+    volumes:
+      - ./data:/opt/project/data
+
   dev_space:
     build:
       context: .
