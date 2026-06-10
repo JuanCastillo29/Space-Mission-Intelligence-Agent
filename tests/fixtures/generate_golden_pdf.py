@@ -13,6 +13,7 @@ Features exercised:
   - Bullet list
   - Two pages (cross-page structure)
 """
+
 import fitz  # PyMuPDF
 
 WIDTH, HEIGHT = 612, 792  # US Letter in points
@@ -21,8 +22,8 @@ COL_GAP = 36  # wide gap for reliable column detection
 COL_W = (WIDTH - 2 * MARGIN - COL_GAP) / 2
 LINE_H = 13  # line height for body text
 
-BODY = "helv"    # Helvetica
-BOLD = "hebo"    # Helvetica-Bold
+BODY = "helv"  # Helvetica
+BOLD = "hebo"  # Helvetica-Bold
 SIZE_TITLE = 18
 SIZE_HEADING = 13
 SIZE_BODY = 10
@@ -36,9 +37,7 @@ def _center_x(text, fontname, fontsize):
 def _assert_fit(rv, label):
     """Abort if a textbox overflowed (negative return = text did not render)."""
     if rv < 0:
-        raise RuntimeError(
-            f"Textbox '{label}' overflowed by {-rv:.1f} pt"
-        )
+        raise RuntimeError(f"Textbox '{label}' overflowed by {-rv:.1f} pt")
 
 
 def _insert_wrapped(page, x, y, text, width, fontname, fontsize):
@@ -60,8 +59,12 @@ def build_pdf(path: str):
 
     # Title (large bold, centered)
     title = "Thermal Analysis of CubeSat Solar Panels"
-    p1.insert_text((_center_x(title, BOLD, SIZE_TITLE), y),
-                   title, fontsize=SIZE_TITLE, fontname=BOLD)
+    p1.insert_text(
+        (_center_x(title, BOLD, SIZE_TITLE), y),
+        title,
+        fontsize=SIZE_TITLE,
+        fontname=BOLD,
+    )
     y += 40
 
     # ── Abstract heading ──
@@ -80,8 +83,7 @@ def build_pdf(path: str):
     y += 65
 
     # ── 1. Introduction heading ──
-    p1.insert_text((MARGIN, y), "1. Introduction",
-                   fontsize=SIZE_HEADING, fontname=BOLD)
+    p1.insert_text((MARGIN, y), "1. Introduction", fontsize=SIZE_HEADING, fontname=BOLD)
     y += 22
 
     # Two-column body text — use separate textboxes placed side by side
@@ -114,13 +116,13 @@ def build_pdf(path: str):
     p1.insert_text(
         (MARGIN, y),
         "Figure 1. Temperature distribution across the panel surface.",
-        fontsize=SIZE_BODY - 1, fontname=BODY,
+        fontsize=SIZE_BODY - 1,
+        fontname=BODY,
     )
     y += 24
 
     # ── 2. Methodology heading ──
-    p1.insert_text((MARGIN, y), "2. Methodology",
-                   fontsize=SIZE_HEADING, fontname=BOLD)
+    p1.insert_text((MARGIN, y), "2. Methodology", fontsize=SIZE_HEADING, fontname=BOLD)
     y += 20
 
     method_text = (
@@ -140,14 +142,13 @@ def build_pdf(path: str):
     y = 60
 
     # ── 3. Results heading ──
-    p2.insert_text((MARGIN, y), "3. Results",
-                   fontsize=SIZE_HEADING, fontname=BOLD)
+    p2.insert_text((MARGIN, y), "3. Results", fontsize=SIZE_HEADING, fontname=BOLD)
     y += 22
 
     # ── Bordered table ──
     headers = ["Configuration", "Peak Temp (C)", "Delta-T (C)"]
     rows = [
-        ["Body-mounted",  "128.3", "193.3"],
+        ["Body-mounted", "128.3", "193.3"],
         ["Single-deploy", "114.7", "179.7"],
         ["Double-deploy", "110.2", "175.2"],
     ]
@@ -159,8 +160,9 @@ def build_pdf(path: str):
     for i, hdr in enumerate(headers):
         rect = fitz.Rect(cx, y, cx + col_widths[i], y + row_h)
         p2.draw_rect(rect, color=(0, 0, 0), width=0.8)
-        p2.insert_textbox(rect, hdr, fontsize=SIZE_BODY, fontname=BOLD,
-                          align=fitz.TEXT_ALIGN_CENTER)
+        p2.insert_textbox(
+            rect, hdr, fontsize=SIZE_BODY, fontname=BOLD, align=fitz.TEXT_ALIGN_CENTER
+        )
         cx += col_widths[i]
     y += row_h
     # Data rows
@@ -169,8 +171,13 @@ def build_pdf(path: str):
         for i, cell in enumerate(row):
             rect = fitz.Rect(cx, y, cx + col_widths[i], y + row_h)
             p2.draw_rect(rect, color=(0, 0, 0), width=0.8)
-            p2.insert_textbox(rect, cell, fontsize=SIZE_BODY, fontname=BODY,
-                              align=fitz.TEXT_ALIGN_CENTER)
+            p2.insert_textbox(
+                rect,
+                cell,
+                fontsize=SIZE_BODY,
+                fontname=BODY,
+                align=fitz.TEXT_ALIGN_CENTER,
+            )
             cx += col_widths[i]
         y += row_h
     y += 20
@@ -187,8 +194,7 @@ def build_pdf(path: str):
     y += 68
 
     # ── 4. Conclusions heading ──
-    p2.insert_text((MARGIN, y), "4. Conclusions",
-                   fontsize=SIZE_HEADING, fontname=BOLD)
+    p2.insert_text((MARGIN, y), "4. Conclusions", fontsize=SIZE_HEADING, fontname=BOLD)
     y += 20
 
     conclusion = (
@@ -209,5 +215,6 @@ def build_pdf(path: str):
 
 if __name__ == "__main__":
     import pathlib
+
     out = pathlib.Path(__file__).with_name("golden_sample.pdf")
     build_pdf(str(out))

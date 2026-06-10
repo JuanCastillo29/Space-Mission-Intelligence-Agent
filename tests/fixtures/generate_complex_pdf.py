@@ -39,11 +39,21 @@ def _center_x(text, fontname, fontsize):
     return (WIDTH - w) / 2
 
 
-def _textbox(page, x, y, w, h, text, fontsize=SIZE_BODY, fontname=BODY,
-             align=fitz.TEXT_ALIGN_LEFT):
+def _textbox(
+    page,
+    x,
+    y,
+    w,
+    h,
+    text,
+    fontsize=SIZE_BODY,
+    fontname=BODY,
+    align=fitz.TEXT_ALIGN_LEFT,
+):
     rc = fitz.Rect(x, y, x + w, y + h)
-    rv = page.insert_textbox(rc, text, fontsize=fontsize, fontname=fontname,
-                             align=align)
+    rv = page.insert_textbox(
+        rc, text, fontsize=fontsize, fontname=fontname, align=align
+    )
     if rv < 0:
         raise RuntimeError(f"Overflow by {-rv:.1f} pt: {text[:60]}...")
     return y + h - rv
@@ -60,8 +70,9 @@ def _table(page, y, headers, rows, col_widths):
     for i, hdr in enumerate(headers):
         rect = fitz.Rect(cx, y, cx + col_widths[i], y + row_h)
         page.draw_rect(rect, color=(0, 0, 0), width=0.8)
-        page.insert_textbox(rect, hdr, fontsize=SIZE_BODY, fontname=BOLD,
-                            align=fitz.TEXT_ALIGN_CENTER)
+        page.insert_textbox(
+            rect, hdr, fontsize=SIZE_BODY, fontname=BOLD, align=fitz.TEXT_ALIGN_CENTER
+        )
         cx += col_widths[i]
     y += row_h
     for row in rows:
@@ -69,8 +80,13 @@ def _table(page, y, headers, rows, col_widths):
         for i, cell in enumerate(row):
             rect = fitz.Rect(cx, y, cx + col_widths[i], y + row_h)
             page.draw_rect(rect, color=(0, 0, 0), width=0.8)
-            page.insert_textbox(rect, cell, fontsize=SIZE_BODY, fontname=BODY,
-                                align=fitz.TEXT_ALIGN_CENTER)
+            page.insert_textbox(
+                rect,
+                cell,
+                fontsize=SIZE_BODY,
+                fontname=BODY,
+                align=fitz.TEXT_ALIGN_CENTER,
+            )
             cx += col_widths[i]
         y += row_h
     return y + 10
@@ -90,13 +106,23 @@ def build_pdf(path: str):
     y = 70
 
     title = "Orbital Debris Mitigation Strategies for LEO Constellations"
-    p.insert_text((_center_x(title, BOLD, SIZE_TITLE), y),
-                  title, fontsize=SIZE_TITLE, fontname=BOLD)
+    p.insert_text(
+        (_center_x(title, BOLD, SIZE_TITLE), y),
+        title,
+        fontsize=SIZE_TITLE,
+        fontname=BOLD,
+    )
     y += 36
 
-    subtitle = "A Comprehensive Analysis of Active Debris Removal and Collision Avoidance"
-    p.insert_text((_center_x(subtitle, BODY, SIZE_H3), y),
-                  subtitle, fontsize=SIZE_H3, fontname=BODY)
+    subtitle = (
+        "A Comprehensive Analysis of Active Debris Removal and Collision Avoidance"
+    )
+    p.insert_text(
+        (_center_x(subtitle, BODY, SIZE_H3), y),
+        subtitle,
+        fontsize=SIZE_H3,
+        fontname=BODY,
+    )
     y += 30
 
     # Preamble text before any heading
@@ -206,8 +232,12 @@ def build_pdf(path: str):
     y += 6
 
     # Figure caption
-    y = _figure_caption(p, y, "Figure 1. Projected debris population growth "
-                        "under baseline and mitigation scenarios (2025-2100).")
+    y = _figure_caption(
+        p,
+        y,
+        "Figure 1. Projected debris population growth "
+        "under baseline and mitigation scenarios (2025-2100).",
+    )
     y += 10
 
     # 1.3 Document Structure — very short section
@@ -260,9 +290,13 @@ def build_pdf(path: str):
     p.insert_textbox(rc2, col2_text, fontsize=SIZE_BODY, fontname=BODY)
     y += col_h + 10
 
-    y = _figure_caption(p, y, "Figure 2. Monte Carlo simulation architecture "
-                        "showing coupling between debris environment model and "
-                        "conjunction assessment module.")
+    y = _figure_caption(
+        p,
+        y,
+        "Figure 2. Monte Carlo simulation architecture "
+        "showing coupling between debris environment model and "
+        "conjunction assessment module.",
+    )
     y += 10
 
     # 2.2 Mitigation Scenarios
@@ -276,16 +310,19 @@ def build_pdf(path: str):
     y += 4
 
     # Scenario table
-    y = _table(p, y,
-               ["Scenario", "PMD Rate", "ADR/Year", "CA Threshold"],
-               [
-                   ["S0: Baseline", "60%", "0", "1e-4"],
-                   ["S1: Improved PMD", "95%", "0", "1e-4"],
-                   ["S2: ADR Only", "60%", "5", "1e-4"],
-                   ["S3: Enhanced CA", "60%", "0", "1e-5"],
-                   ["S4: Combined", "95%", "5", "1e-5"],
-               ],
-               [140, 110, 100, 130])
+    y = _table(
+        p,
+        y,
+        ["Scenario", "PMD Rate", "ADR/Year", "CA Threshold"],
+        [
+            ["S0: Baseline", "60%", "0", "1e-4"],
+            ["S1: Improved PMD", "95%", "0", "1e-4"],
+            ["S2: ADR Only", "60%", "5", "1e-4"],
+            ["S3: Enhanced CA", "60%", "0", "1e-5"],
+            ["S4: Combined", "95%", "5", "1e-5"],
+        ],
+        [140, 110, 100, 130],
+    )
     y += 6
 
     # 2.3 Fragmentation Model
@@ -343,20 +380,27 @@ def build_pdf(path: str):
     y += 4
 
     # Cost table
-    y = _table(p, y,
-               ["Component", "Unit Cost (EUR M)", "Annual Cost (EUR M)"],
-               [
-                   ["ADR mission (chaser)", "150", "750"],
-                   ["ADR target selection", "2", "10"],
-                   ["CA manoeuvre (per sat)", "0.05", "15"],
-                   ["SSA data subscription", "5", "5"],
-                   ["Ground segment ops", "10", "10"],
-               ],
-               [180, 130, 140])
+    y = _table(
+        p,
+        y,
+        ["Component", "Unit Cost (EUR M)", "Annual Cost (EUR M)"],
+        [
+            ["ADR mission (chaser)", "150", "750"],
+            ["ADR target selection", "2", "10"],
+            ["CA manoeuvre (per sat)", "0.05", "15"],
+            ["SSA data subscription", "5", "5"],
+            ["Ground segment ops", "10", "10"],
+        ],
+        [180, 130, 140],
+    )
     y += 6
 
-    y = _figure_caption(p, y, "Figure 3. Cost breakdown by mitigation "
-                        "component for Scenario S4 over a 10-year horizon.")
+    y = _figure_caption(
+        p,
+        y,
+        "Figure 3. Cost breakdown by mitigation "
+        "component for Scenario S4 over a 10-year horizon.",
+    )
     y += 10
 
     cost_disc = (
@@ -414,16 +458,19 @@ def build_pdf(path: str):
     y += 4
 
     # Large results table
-    y = _table(p, y,
-               ["Scenario", "Pop. 2050", "Pop. 2100", "Coll./Year", "Delta %"],
-               [
-                   ["S0: Baseline", "45,200", "65,000", "0.80", "—"],
-                   ["S1: PMD 95%", "40,100", "48,000", "0.50", "-26%"],
-                   ["S2: ADR Only", "42,800", "52,000", "0.40", "-20%"],
-                   ["S3: CA Only", "44,900", "63,500", "0.75", "-2%"],
-                   ["S4: Combined", "37,500", "38,200", "0.15", "-41%"],
-               ],
-               [120, 90, 90, 90, 80])
+    y = _table(
+        p,
+        y,
+        ["Scenario", "Pop. 2050", "Pop. 2100", "Coll./Year", "Delta %"],
+        [
+            ["S0: Baseline", "45,200", "65,000", "0.80", "—"],
+            ["S1: PMD 95%", "40,100", "48,000", "0.50", "-26%"],
+            ["S2: ADR Only", "42,800", "52,000", "0.40", "-20%"],
+            ["S3: CA Only", "44,900", "63,500", "0.75", "-2%"],
+            ["S4: Combined", "37,500", "38,200", "0.15", "-41%"],
+        ],
+        [120, 90, 90, 90, 80],
+    )
 
     # ── PAGE 6: Results continued ────────────────────────────
     p = doc.new_page(width=WIDTH, height=HEIGHT)
@@ -442,8 +489,12 @@ def build_pdf(path: str):
     y = _textbox(p, MARGIN, y, body_w, 100, pop_4)
     y += 6
 
-    y = _figure_caption(p, y, "Figure 4. Debris population trajectories for "
-                        "all five scenarios with 95% confidence intervals.")
+    y = _figure_caption(
+        p,
+        y,
+        "Figure 4. Debris population trajectories for "
+        "all five scenarios with 95% confidence intervals.",
+    )
     y += 10
 
     # 3.2 Collision Avoidance Effectiveness
@@ -474,16 +525,18 @@ def build_pdf(path: str):
     y += 4
 
     # CA statistics table
-    y = _table(p, y,
-               ["Pc Threshold", "Manoeuvres/Sat/Year", "False Alarm %",
-                "Fuel (kg/yr)"],
-               [
-                   ["1e-3", "0.4", "5%", "0.02"],
-                   ["1e-4", "2.1", "12%", "0.11"],
-                   ["1e-5", "8.7", "23%", "0.45"],
-                   ["1e-6", "34.2", "41%", "1.78"],
-               ],
-               [110, 130, 110, 110])
+    y = _table(
+        p,
+        y,
+        ["Pc Threshold", "Manoeuvres/Sat/Year", "False Alarm %", "Fuel (kg/yr)"],
+        [
+            ["1e-3", "0.4", "5%", "0.02"],
+            ["1e-4", "2.1", "12%", "0.11"],
+            ["1e-5", "8.7", "23%", "0.45"],
+            ["1e-6", "34.2", "41%", "1.78"],
+        ],
+        [110, 130, 110, 110],
+    )
 
     # ── PAGE 7: Discussion ───────────────────────────────────
     p = doc.new_page(width=WIDTH, height=HEIGHT)
@@ -564,14 +617,6 @@ def build_pdf(path: str):
     y = _textbox(p, MARGIN, y, body_w, 100, conc_1)
     y += 4
 
-    conc_2 = (
-        "Key recommendations include: (1) Mandate 95 percent PMD compliance "
-        "for all new LEO missions by 2030. (2) Establish an internationally "
-        "funded ADR programme removing at least 5 high-risk objects per year "
-        "starting in 2028. (3) Deploy next-generation SSA capabilities to "
-        "reduce conjunction false alarm rates by 60 percent. (4) Adopt a "
-        "debris remediation fee to internalise environmental costs."
-    )
     y = _textbox(p, MARGIN, y, body_w, 80, conc_1)
     y += 6
 
@@ -605,5 +650,6 @@ def build_pdf(path: str):
 
 if __name__ == "__main__":
     import pathlib
+
     out = pathlib.Path(__file__).with_name("complex_sample.pdf")
     build_pdf(str(out))

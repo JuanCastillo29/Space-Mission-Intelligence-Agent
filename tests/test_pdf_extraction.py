@@ -44,13 +44,28 @@ from scripts.ingestion.pdf_extractor import (
 # ---------------------------------------------------------------------------
 
 
-def _block(text, x0=50, y0=100, x1=500, y1=120, font_size=10.0,
-           is_bold=False, block_type="text", font_name="Times"):
+def _block(
+    text,
+    x0=50,
+    y0=100,
+    x1=500,
+    y1=120,
+    font_size=10.0,
+    is_bold=False,
+    block_type="text",
+    font_name="Times",
+):
     """Shortcut to build a TextBlock for testing."""
     return TextBlock(
-        text=text, x0=x0, y0=y0, x1=x1, y1=y1,
-        font_size=font_size, font_name=font_name,
-        is_bold=is_bold, block_type=block_type,
+        text=text,
+        x0=x0,
+        y0=y0,
+        x1=x1,
+        y1=y1,
+        font_size=font_size,
+        font_name=font_name,
+        is_bold=is_bold,
+        block_type=block_type,
     )
 
 
@@ -146,7 +161,7 @@ class TestCleanExtractedText:
     def test_removes_standalone_page_numbers(self):
         text = "Some content.\n42\nMore content."
         result = clean_extracted_text(text)
-        lines = [l.strip() for l in result.splitlines() if l.strip()]
+        lines = [line.strip() for line in result.splitlines() if line.strip()]
         assert "42" not in lines
 
     def test_removes_copyright_lines(self):
@@ -526,7 +541,7 @@ class TestMergeSplitParagraphs:
         assert len(result) == 2
 
     def test_hyphen_merge_removes_hyphen(self):
-        blocks = [
+        [
             _block("The Mars-", y0=100, y1=115),
             _block("Express mission launched.", y0=118, y1=133),
         ]
@@ -551,22 +566,22 @@ class TestMergeCrossPageParagraphs:
 
     def test_merges_split_sentence(self):
         pages = [
-            PageResult(page_num=1, layout="single",
-                       text="The mission was designed to"),
-            PageResult(page_num=2, layout="single",
-                       text="study Mars from polar orbit."),
+            PageResult(page_num=1, layout="single", text="The mission was designed to"),
+            PageResult(
+                page_num=2, layout="single", text="study Mars from polar orbit."
+            ),
         ]
         result = merge_cross_page_paragraphs(pages)
-        combined = result[0].text + " " + result[1].text
+        result[0].text + " " + result[1].text
         # The fragment should be moved from page 2 to page 1
         assert "designed to study" in result[0].text
 
     def test_does_not_merge_complete_sentences(self):
         pages = [
-            PageResult(page_num=1, layout="single",
-                       text="The mission ended successfully."),
-            PageResult(page_num=2, layout="single",
-                       text="A new chapter began."),
+            PageResult(
+                page_num=1, layout="single", text="The mission ended successfully."
+            ),
+            PageResult(page_num=2, layout="single", text="A new chapter began."),
         ]
         result = merge_cross_page_paragraphs(pages)
         assert "successfully." in result[0].text
@@ -574,10 +589,8 @@ class TestMergeCrossPageParagraphs:
 
     def test_does_not_merge_into_heading(self):
         pages = [
-            PageResult(page_num=1, layout="single",
-                       text="### Section Title"),
-            PageResult(page_num=2, layout="single",
-                       text="content of this section."),
+            PageResult(page_num=1, layout="single", text="### Section Title"),
+            PageResult(page_num=2, layout="single", text="content of this section."),
         ]
         result = merge_cross_page_paragraphs(pages)
         assert "### Section Title" in result[0].text
@@ -699,6 +712,7 @@ class TestGoldenFileRegression:
     def _load(self):
         """Run the extractor once and share across tests."""
         from scripts.ingestion.pdf_extractor import extract_pdf
+
         self.text, self.report = extract_pdf(str(self.GOLDEN_PDF))
         self.expected = self.GOLDEN_MD.read_text(encoding="utf-8")
 
@@ -714,8 +728,13 @@ class TestGoldenFileRegression:
         assert "## Thermal Analysis of CubeSat Solar Panels" in self.text
 
     def test_all_section_headings_present(self):
-        for heading in ["Abstract", "1. Introduction",
-                        "2. Methodology", "3. Results", "4. Conclusions"]:
+        for heading in [
+            "Abstract",
+            "1. Introduction",
+            "2. Methodology",
+            "3. Results",
+            "4. Conclusions",
+        ]:
             assert f"### {heading}" in self.text, f"Missing heading: {heading}"
 
     def test_table_present(self):
@@ -724,8 +743,11 @@ class TestGoldenFileRegression:
         assert "128.3" in self.text
 
     def test_table_row_count(self):
-        table_lines = [l for l in self.text.splitlines()
-                       if l.strip().startswith("|") and "---" not in l]
+        table_lines = [
+            line
+            for line in self.text.splitlines()
+            if line.strip().startswith("|") and "---" not in line
+        ]
         # 1 header + 3 data rows = 4
         assert len(table_lines) == 4
 
@@ -740,8 +762,9 @@ class TestGoldenFileRegression:
 
     def test_no_quality_issues(self):
         for p in self.report.page_results:
-            assert p["issues"] == [], \
+            assert p["issues"] == [], (
                 f"Page {p['page']} has unexpected issues: {p['issues']}"
+            )
 
     # ── Similarity to frozen reference ─────────────────────────
 
@@ -750,6 +773,7 @@ class TestGoldenFileRegression:
         Uses SequenceMatcher ratio — a threshold below 1.0 absorbs minor
         whitespace/punctuation drift across PyMuPDF versions."""
         from difflib import SequenceMatcher
+
         ratio = SequenceMatcher(None, self.text, self.expected).ratio()
         assert ratio >= 0.95, (
             f"Output similarity {ratio:.3f} is below 0.95 threshold — "

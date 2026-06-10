@@ -104,11 +104,7 @@ class TestSectionParsing:
         assert "Introduction > Background" in paths
 
     def test_heading_level_reset(self):
-        text = (
-            "## A\n\nText A.\n\n"
-            "### B\n\nText B.\n\n"
-            "## C\n\nText C."
-        )
+        text = "## A\n\nText A.\n\n### B\n\nText B.\n\n## C\n\nText C."
         sections = _parse_sections(text)
         paths = [s.path for s in sections]
         assert "A" in paths
@@ -138,12 +134,7 @@ class TestSectionParsing:
 
 class TestAtomicBlocks:
     def test_table_detected_as_single_block(self):
-        text = (
-            "| A | B |\n"
-            "| --- | --- |\n"
-            "| 1 | 2 |\n"
-            "| 3 | 4 |"
-        )
+        text = "| A | B |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |"
         blocks = _extract_blocks(text)
         assert len(blocks) == 1
         assert blocks[0].kind == "table"
@@ -227,12 +218,9 @@ class TestChunkAssembly:
             prev_content = chunks[i - 1].content
             curr_content = chunks[i].content
             overlap_found = any(
-                word in curr_content
-                for word in prev_content.split()[-10:]
+                word in curr_content for word in prev_content.split()[-10:]
             )
-            assert overlap_found, (
-                f"Chunk {i} should contain overlap from chunk {i-1}"
-            )
+            assert overlap_found, f"Chunk {i} should contain overlap from chunk {i - 1}"
 
     def test_no_overlap_across_sections(self):
         text_a = _long_text(150, seed="spacecraft")
@@ -241,8 +229,12 @@ class TestChunkAssembly:
         section_b = f"## Section B\n\n{text_b}"
         md = _make_markdown(f"{section_a}\n\n{section_b}")
         chunks = chunk_markdown(md, max_tokens=80, overlap_tokens=20)
-        a_chunks = [c for c in chunks if c.section_path and "Section A" in c.section_path]
-        b_chunks = [c for c in chunks if c.section_path and "Section B" in c.section_path]
+        a_chunks = [
+            c for c in chunks if c.section_path and "Section A" in c.section_path
+        ]
+        b_chunks = [
+            c for c in chunks if c.section_path and "Section B" in c.section_path
+        ]
         assert len(a_chunks) > 0
         assert len(b_chunks) > 0
         first_b = b_chunks[0]
@@ -250,17 +242,12 @@ class TestChunkAssembly:
 
     def test_table_not_split(self):
         table = (
-            "| Config | Temp |\n"
-            "| --- | --- |\n"
-            "| A | 100 |\n"
-            "| B | 200 |\n"
-            "| C | 300 |"
+            "| Config | Temp |\n| --- | --- |\n| A | 100 |\n| B | 200 |\n| C | 300 |"
         )
         md = _make_markdown(f"## Data\n\nSome intro.\n\n{table}\n\nConclusion.")
         chunks = chunk_markdown(md, max_tokens=1024, overlap_tokens=0)
         table_in_single_chunk = any(
-            "| A | 100 |" in c.content and "| C | 300 |" in c.content
-            for c in chunks
+            "| A | 100 |" in c.content and "| C | 300 |" in c.content for c in chunks
         )
         assert table_in_single_chunk
 
@@ -288,9 +275,7 @@ class TestChunkAssembly:
         assert indices == list(range(len(chunks)))
 
     def test_section_path_propagated(self):
-        md = _make_markdown(
-            "## Introduction\n\nText.\n\n### Methods\n\nMore text."
-        )
+        md = _make_markdown("## Introduction\n\nText.\n\n### Methods\n\nMore text.")
         chunks = chunk_markdown(md, max_tokens=1024, overlap_tokens=0)
         paths = [c.section_path for c in chunks]
         assert "Introduction" in paths
@@ -320,9 +305,7 @@ class TestMetadata:
         assert any(c.metadata.get("has_table") for c in chunks)
 
     def test_has_figure_flag(self):
-        md = _make_markdown(
-            "## Results\n\n[Figure: Temperature distribution map.]"
-        )
+        md = _make_markdown("## Results\n\n[Figure: Temperature distribution map.]")
         chunks = chunk_markdown(md)
         assert any(c.metadata.get("has_figure") for c in chunks)
 
@@ -342,9 +325,7 @@ class TestMetadata:
 class TestGoldenSample:
     @pytest.fixture()
     def golden_md(self) -> str:
-        return (FIXTURES_DIR / "golden_sample_expected.md").read_text(
-            encoding="utf-8"
-        )
+        return (FIXTURES_DIR / "golden_sample_expected.md").read_text(encoding="utf-8")
 
     def test_produces_chunks(self, golden_md):
         chunks = chunk_markdown(golden_md)
@@ -361,8 +342,7 @@ class TestGoldenSample:
     def test_table_intact(self, golden_md):
         chunks = chunk_markdown(golden_md)
         table_in_single = any(
-            "Body-mounted" in c.content and "Double-deploy" in c.content
-            for c in chunks
+            "Body-mounted" in c.content and "Double-deploy" in c.content for c in chunks
         )
         assert table_in_single
 

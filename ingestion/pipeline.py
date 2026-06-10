@@ -49,7 +49,9 @@ async def ingest_pdf(
     log.info("Extracting %s", pdf_path.name)
     markdown, report = await asyncio.to_thread(extract_pdf, str(pdf_path))
 
-    log.info("Chunking (%d pages, quality %.2f)", report.total_pages, report.avg_quality)
+    log.info(
+        "Chunking (%d pages, quality %.2f)", report.total_pages, report.avg_quality
+    )
     chunks = await asyncio.to_thread(
         chunk_markdown,
         markdown,
@@ -64,7 +66,11 @@ async def ingest_pdf(
         batch = texts[i : i + embed_batch_size]
         vectors = await asyncio.to_thread(embedder.embed, batch)
         all_vectors.extend(vectors)
-        log.debug("Embedded batch %d/%d", i // embed_batch_size + 1, -(-len(texts) // embed_batch_size))
+        log.debug(
+            "Embedded batch %d/%d",
+            i // embed_batch_size + 1,
+            -(-len(texts) // embed_batch_size),
+        )
 
     doc = Document(
         title=pdf_path.stem,

@@ -28,13 +28,14 @@ import fitz
 import json
 import statistics
 import argparse
-from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TextBlock:
@@ -93,8 +94,8 @@ class ExtractionReport:
 # Text-healing helpers
 # ---------------------------------------------------------------------------
 
-_HYPHEN_LINE_LC = re.compile(r'(\w)-\n\s*([a-z])')
-_HYPHEN_LINE_UC = re.compile(r'([A-Z])-\n\s*([A-Z])')
+_HYPHEN_LINE_LC = re.compile(r"(\w)-\n\s*([a-z])")
+_HYPHEN_LINE_UC = re.compile(r"([A-Z])-\n\s*([A-Z])")
 
 
 def rejoin_hyphenated_words(text: str) -> str:
@@ -103,12 +104,12 @@ def rejoin_hyphenated_words(text: str) -> str:
     Handles both lowercase continuations (``configu-\\nration``)
     and all-caps acronym splits (``SPI-\\nCAM``).
     """
-    text = _HYPHEN_LINE_LC.sub(r'\1\2', text)
-    text = _HYPHEN_LINE_UC.sub(r'\1\2', text)
+    text = _HYPHEN_LINE_LC.sub(r"\1\2", text)
+    text = _HYPHEN_LINE_UC.sub(r"\1\2", text)
     return text
 
 
-_BULLET_RE = re.compile(r'^[•–\-\*\+]\s')
+_BULLET_RE = re.compile(r"^[•–\-\*\+]\s")
 
 
 def fix_heading_spaces(page: fitz.Page, block: TextBlock) -> str:
@@ -116,8 +117,7 @@ def fix_heading_spaces(page: fitz.Page, block: TextBlock) -> str:
     missing inter-word spaces dropped by PyMuPDF in large-font headings.
     """
     clip = fitz.Rect(block.x0 - 1, block.y0 - 1, block.x1 + 1, block.y1 + 1)
-    rawdict = page.get_text("rawdict", clip=clip,
-                            flags=fitz.TEXT_PRESERVE_WHITESPACE)
+    rawdict = page.get_text("rawdict", clip=clip, flags=fitz.TEXT_PRESERVE_WHITESPACE)
     lines_out = []
     for blk in rawdict.get("blocks", []):
         if blk.get("type") != 0:
@@ -138,32 +138,28 @@ def fix_heading_spaces(page: fitz.Page, block: TextBlock) -> str:
                 gap = line_chars[i][0][0] - line_chars[i - 1][0][2]
                 prev_char = line_chars[i - 1][1]
                 curr_char = line_chars[i][1]
-                if (gap > line_chars[i - 1][2]
-                        and prev_char != ' ' and curr_char != ' '):
-                    result += ' '
+                if gap > line_chars[i - 1][2] and prev_char != " " and curr_char != " ":
+                    result += " "
                 result += curr_char
             lines_out.append(result.strip())
     if not lines_out:
         return block.text
-    return '\n'.join(lines_out)
+    return "\n".join(lines_out)
 
 
-def _line_matches_heading(line: dict, heading_size: float,
-                          heading_bold: bool) -> bool:
+def _line_matches_heading(line: dict, heading_size: float, heading_bold: bool) -> bool:
     """Check if a raw-dict line matches the expected heading font."""
     spans = line.get("spans", [])
     if not spans:
         return False
     for span in spans:
-        has_content = (
-            span.get("text", "").strip()
-            or any(c.get("c", "").strip() for c in span.get("chars", []))
+        has_content = span.get("text", "").strip() or any(
+            c.get("c", "").strip() for c in span.get("chars", [])
         )
         if not has_content:
             continue
         span_bold = (
-            "bold" in span.get("font", "").lower()
-            or span.get("flags", 0) & 2**4
+            "bold" in span.get("font", "").lower() or span.get("flags", 0) & 2**4
         )
         span_size = span.get("size", 0)
         size_close = abs(span_size - heading_size) < heading_size * 0.2
@@ -177,13 +173,13 @@ def _line_matches_heading(line: dict, heading_size: float,
 def _join_reflow(parts: list[str]) -> str:
     """Join reflowed line fragments, collapsing trailing hyphens."""
     if not parts:
-        return ''
+        return ""
     result = parts[0]
     for p in parts[1:]:
-        if result.endswith('-'):
+        if result.endswith("-"):
             result += p
         else:
-            result += ' ' + p
+            result += " " + p
     return result
 
 
@@ -196,7 +192,7 @@ def reflow_block_text(text: str) -> str:
     previous fragment ends with ``-``, the join is done without a space
     (e.g. ``Cardesín-`` + ``Moinelo`` → ``Cardesín-Moinelo``).
     """
-    lines = text.split('\n')
+    lines = text.split("\n")
     paragraphs: list[str] = []
     current: list[str] = []
     for line in lines:
@@ -205,7 +201,7 @@ def reflow_block_text(text: str) -> str:
             if current:
                 paragraphs.append(_join_reflow(current))
                 current = []
-            paragraphs.append('')
+            paragraphs.append("")
         elif _BULLET_RE.match(stripped):
             if current:
                 paragraphs.append(_join_reflow(current))
@@ -215,20 +211,16 @@ def reflow_block_text(text: str) -> str:
             current.append(stripped)
     if current:
         paragraphs.append(_join_reflow(current))
-    return '\n'.join(paragraphs)
+    return "\n".join(paragraphs)
 
 
 # ---------------------------------------------------------------------------
 # Block tagging – boilerplate / captions
 # ---------------------------------------------------------------------------
 
-_FIGURE_CAPTION_RE = re.compile(
-    r"^Fig\.?\s*\d+|^Figure\s+\d+", re.IGNORECASE
-)
+_FIGURE_CAPTION_RE = re.compile(r"^Fig\.?\s*\d+|^Figure\s+\d+", re.IGNORECASE)
 
-_TABLE_CAPTION_RE = re.compile(
-    r"^Table\s+\d+", re.IGNORECASE
-)
+_TABLE_CAPTION_RE = re.compile(r"^Table\s+\d+", re.IGNORECASE)
 
 _HAL_MARKERS = [
     re.compile(r"To\s+cite\s+this\s+version", re.IGNORECASE),
@@ -269,8 +261,10 @@ def tag_figure_captions(blocks: list[TextBlock]) -> list[TextBlock]:
 # Borderless-table detection via word-position analysis
 # ---------------------------------------------------------------------------
 
-def _find_table_extent(blocks: list[TextBlock], caption_idx: int,
-                       body_font_size: float) -> int:
+
+def _find_table_extent(
+    blocks: list[TextBlock], caption_idx: int, body_font_size: float
+) -> int:
     """Return the index (exclusive) of the last block belonging to the table
     that starts at *caption_idx*.
 
@@ -291,14 +285,15 @@ def _find_table_extent(blocks: list[TextBlock], caption_idx: int,
             break
         if b.is_bold and len(text) < 100:
             break
-        if len(text) > 120 and text[-1] in '.!?':
+        if len(text) > 120 and text[-1] in ".!?":
             break
         end = j + 1
     return end
 
 
-def _build_table_from_words(page: fitz.Page, y0: float, y1: float,
-                            x0: float, x1: float) -> str | None:
+def _build_table_from_words(
+    page: fitz.Page, y0: float, y1: float, x0: float, x1: float
+) -> str | None:
     """Build a markdown table from the word positions in a page region.
 
     1. Collect all words whose centre falls inside the clip region.
@@ -392,8 +387,9 @@ def _build_table_from_words(page: fitz.Page, y0: float, y1: float,
     return format_table_as_markdown(merged_table)
 
 
-def tag_and_extract_tables(blocks: list[TextBlock], page: fitz.Page,
-                           body_font_size: float) -> list[TextBlock]:
+def tag_and_extract_tables(
+    blocks: list[TextBlock], page: fitz.Page, body_font_size: float
+) -> list[TextBlock]:
     """Detect table captions, find their extent, attempt structured extraction,
     and replace the caption+data blocks with a single table block.
 
@@ -440,21 +436,28 @@ def tag_and_extract_tables(blocks: list[TextBlock], page: fitz.Page,
 
         caption_text = table_blocks[0].text.strip()
         # Extract just the "Table N <title>" part before data begins
-        caption_line = caption_text.split('\n')[0] if '\n' in caption_text else caption_text
+        caption_line = (
+            caption_text.split("\n")[0] if "\n" in caption_text else caption_text
+        )
 
         if md:
             text = f"[Table: {caption_line}]\n\n{md}"
         else:
-            raw = '\n'.join(tb.text.strip() for tb in table_blocks)
+            raw = "\n".join(tb.text.strip() for tb in table_blocks)
             text = f"[Table: {raw}]"
 
-        result.append(TextBlock(
-            text=text,
-            x0=tx0, y0=ty0, x1=tx1, y1=ty1,
-            font_size=table_blocks[0].font_size,
-            font_name=table_blocks[0].font_name,
-            block_type="table",
-        ))
+        result.append(
+            TextBlock(
+                text=text,
+                x0=tx0,
+                y0=ty0,
+                x1=tx1,
+                y1=ty1,
+                font_size=table_blocks[0].font_size,
+                font_name=table_blocks[0].font_name,
+                block_type="table",
+            )
+        )
         i = end
 
     return result
@@ -464,32 +467,33 @@ def tag_and_extract_tables(blocks: list[TextBlock], page: fitz.Page,
 # Bordered-table extraction (find_tables with default strategy)
 # ---------------------------------------------------------------------------
 
-def format_table_as_markdown(data: list[list[str | None]]) -> str:
+
+def format_table_as_markdown(data: Sequence[Sequence[str | None]]) -> str:
     """Format extracted table data as a markdown table."""
     if not data or not data[0]:
         return ""
 
     ncols = max(len(row) for row in data)
 
-    def clean_cell(cell):
+    def clean_cell(cell: str | None) -> str:
         if cell is None:
             return ""
         return cell.strip().replace("\n", " ").replace("|", "\\|")
 
-    rows = []
+    rows: list[list[str]] = []
     for row in data:
-        cells = [clean_cell(c) for c in row]
+        cells: list[str] = [clean_cell(c) for c in row]
         while len(cells) < ncols:
             cells.append("")
         rows.append(cells)
 
-    lines = []
-    lines.append("| " + " | ".join(rows[0]) + " |")
-    lines.append("| " + " | ".join(["---"] * ncols) + " |")
+    md_lines: list[str] = []
+    md_lines.append("| " + " | ".join(rows[0]) + " |")
+    md_lines.append("| " + " | ".join(["---"] * ncols) + " |")
     for row in rows[1:]:
-        lines.append("| " + " | ".join(row) + " |")
+        md_lines.append("| " + " | ".join(row) + " |")
 
-    return "\n".join(lines)
+    return "\n".join(md_lines)
 
 
 def extract_page_tables(page: fitz.Page) -> list[TextBlock]:
@@ -529,25 +533,33 @@ def extract_page_tables(page: fitz.Page) -> list[TextBlock]:
         if not md:
             continue
 
-        table_blocks.append(TextBlock(
-            text=md,
-            x0=bbox[0], y0=bbox[1], x1=bbox[2], y1=bbox[3],
-            block_type="table"
-        ))
+        table_blocks.append(
+            TextBlock(
+                text=md,
+                x0=bbox[0],
+                y0=bbox[1],
+                x1=bbox[2],
+                y1=bbox[3],
+                block_type="table",
+            )
+        )
 
     return table_blocks
 
 
 def _blocks_overlap(block: TextBlock, table: TextBlock, margin: float = 5.0) -> bool:
-    return not (block.x1 < table.x0 - margin or
-                block.x0 > table.x1 + margin or
-                block.y1 < table.y0 - margin or
-                block.y0 > table.y1 + margin)
+    return not (
+        block.x1 < table.x0 - margin
+        or block.x0 > table.x1 + margin
+        or block.y1 < table.y0 - margin
+        or block.y0 > table.y1 + margin
+    )
 
 
 # ---------------------------------------------------------------------------
 # Block extraction
 # ---------------------------------------------------------------------------
+
 
 def get_text_blocks(page: fitz.Page, vmargin_pct: float = 0.05) -> list[TextBlock]:
     page_height = page.rect.height
@@ -616,26 +628,25 @@ def get_text_blocks(page: fitz.Page, vmargin_pct: float = 0.05) -> list[TextBloc
             full_text = rejoin_hyphenated_words(full_text)
             full_text = reflow_block_text(full_text)
 
-            avg_font_size = (
-                statistics.mean(font_sizes) if font_sizes else 0.0
-            )
+            avg_font_size = statistics.mean(font_sizes) if font_sizes else 0.0
             dominant_font = (
-                max(set(font_names), key=font_names.count)
-                if font_names else None
+                max(set(font_names), key=font_names.count) if font_names else None
             )
-            is_bold = (
-                bold_count > total_spans / 2 if total_spans > 0
-                else False
-            )
+            is_bold = bold_count > total_spans / 2 if total_spans > 0 else False
 
-            blocks.append(TextBlock(
-                text=full_text,
-                x0=x0, y0=g_y0 or y0, x1=x1, y1=g_y1 or y1,
-                font_size=avg_font_size,
-                font_name=dominant_font,
-                is_bold=is_bold,
-                block_type=block_type,
-            ))
+            blocks.append(
+                TextBlock(
+                    text=full_text,
+                    x0=x0,
+                    y0=g_y0 or y0,
+                    x1=x1,
+                    y1=g_y1 or y1,
+                    font_size=avg_font_size,
+                    font_name=dominant_font or "",
+                    is_bold=is_bold,
+                    block_type=block_type,
+                )
+            )
     return blocks
 
 
@@ -690,9 +701,13 @@ def _line_font_info(line: dict) -> tuple[bool, float]:
 # Column detection / reading order
 # ---------------------------------------------------------------------------
 
-def _find_column_gaps(blocks: list[TextBlock], page_width: float,
-                      min_gap_pct: float = 0.01,
-                      max_gap_abs: float = 20.0) -> list[dict]:
+
+def _find_column_gaps(
+    blocks: list[TextBlock],
+    page_width: float,
+    min_gap_pct: float = 0.01,
+    max_gap_abs: float = 20.0,
+) -> list[dict]:
     if not blocks:
         return []
 
@@ -712,23 +727,29 @@ def _find_column_gaps(blocks: list[TextBlock], page_width: float,
         gap_end = merged[i + 1][0]
         gap_size = gap_end - gap_start
         if gap_size >= min_gap:
-            gaps.append({
-                "start": gap_start,
-                "end": gap_end,
-                "midpoint": (gap_start + gap_end) / 2,
-                "size": gap_size,
-            })
+            gaps.append(
+                {
+                    "start": gap_start,
+                    "end": gap_end,
+                    "midpoint": (gap_start + gap_end) / 2,
+                    "size": gap_size,
+                }
+            )
     return gaps
 
 
-def detect_columns(blocks: list[TextBlock], page_width: float,
-                   body_font_size: float,
-                   min_gap_pct: float = 0.01,
-                   full_width_pct: float = 0.6,
-                   font_tolerance: float = 0.15) -> dict:
+def detect_columns(
+    blocks: list[TextBlock],
+    page_width: float,
+    body_font_size: float,
+    min_gap_pct: float = 0.01,
+    full_width_pct: float = 0.6,
+    font_tolerance: float = 0.15,
+) -> dict:
     content_blocks = [b for b in blocks if b.block_type == "text"]
     body_blocks = [
-        b for b in content_blocks
+        b
+        for b in content_blocks
         if abs(b.font_size - body_font_size) / body_font_size < font_tolerance
     ]
 
@@ -779,9 +800,10 @@ def detect_columns(blocks: list[TextBlock], page_width: float,
         columns = [col for _, col in non_empty]
         kept_indices = {i for i, _ in non_empty}
         boundaries = [
-            b for idx, b in enumerate(boundaries)
+            b
+            for idx, b in enumerate(boundaries)
             if idx in kept_indices or (idx + 1) in kept_indices
-        ][:len(columns) - 1]
+        ][: len(columns) - 1]
         num_columns = len(columns)
 
     _COL_NAMES = {1: "single", 2: "two_columns", 3: "three_columns"}
@@ -831,10 +853,13 @@ def assemble_reading_order(column_info: dict) -> list[TextBlock]:
 # Paragraph merging (intra-page)
 # ---------------------------------------------------------------------------
 
-def merge_split_paragraphs(blocks: list[TextBlock],
-                           body_font_size: float,
-                           max_y_gap_factor: float = 1.8,
-                           x_overlap_pct: float = 0.5) -> list[TextBlock]:
+
+def merge_split_paragraphs(
+    blocks: list[TextBlock],
+    body_font_size: float,
+    max_y_gap_factor: float = 1.8,
+    x_overlap_pct: float = 0.5,
+) -> list[TextBlock]:
     if not blocks:
         return []
 
@@ -842,9 +867,7 @@ def merge_split_paragraphs(blocks: list[TextBlock],
     for block in blocks[1:]:
         prev = merged[-1]
 
-        font_similar = (
-            abs(prev.font_size - block.font_size) < body_font_size * 0.15
-        )
+        font_similar = abs(prev.font_size - block.font_size) < body_font_size * 0.15
 
         overlap_start = max(prev.x0, block.x0)
         overlap_end = min(prev.x1, block.x1)
@@ -863,11 +886,16 @@ def merge_split_paragraphs(blocks: list[TextBlock],
         # Don't merge into a block that starts with a bullet marker
         next_starts_bullet = _BULLET_RE.match(block.text.lstrip())
 
-        if (font_similar and x_overlaps and close_y
-                and ends_mid_sentence and not next_starts_bullet
-                and not block.is_bold):
+        if (
+            font_similar
+            and x_overlaps
+            and close_y
+            and ends_mid_sentence
+            and not next_starts_bullet
+            and not block.is_bold
+        ):
             prev_stripped = prev.text.rstrip()
-            if prev_stripped.endswith('-'):
+            if prev_stripped.endswith("-"):
                 merged_text = prev_stripped[:-1] + block.text.lstrip()
             else:
                 merged_text = prev_stripped + " " + block.text.lstrip()
@@ -891,6 +919,7 @@ def merge_split_paragraphs(blocks: list[TextBlock],
 # ---------------------------------------------------------------------------
 # Heading detection
 # ---------------------------------------------------------------------------
+
 
 def detect_headings(blocks: list[TextBlock], body_font_size: float) -> list[TextBlock]:
     heading_blocks = []
@@ -917,7 +946,7 @@ def get_body_font_size(blocks: list[TextBlock]) -> float:
     for s in sizes:
         rounded = round(s, 1)
         size_counts[rounded] = size_counts.get(rounded, 0) + 1
-    return max(size_counts, key=size_counts.get)
+    return max(size_counts, key=lambda k: size_counts[k])
 
 
 # ---------------------------------------------------------------------------
@@ -993,6 +1022,7 @@ def clean_extracted_text(text: str) -> str:
 # Quality scoring
 # ---------------------------------------------------------------------------
 
+
 def compute_quality_score(
     text: str,
     blocks: list[TextBlock],
@@ -1054,13 +1084,17 @@ def compute_quality_score(
 # Single-page extraction
 # ---------------------------------------------------------------------------
 
+
 def extract_page(page: fitz.Page, page_num: int) -> PageResult:
     blocks = get_text_blocks(page)
 
     if not blocks:
         return PageResult(
-            page_num=page_num, layout="empty", text="",
-            quality_score=0.0, issues=["empty_page"],
+            page_num=page_num,
+            layout="empty",
+            text="",
+            quality_score=0.0,
+            issues=["empty_page"],
         )
 
     tag_boilerplate_blocks(blocks)
@@ -1070,7 +1104,8 @@ def extract_page(page: fitz.Page, page_num: int) -> PageResult:
     bordered_tables = extract_page_tables(page)
     if bordered_tables:
         blocks = [
-            b for b in blocks
+            b
+            for b in blocks
             if not any(_blocks_overlap(b, tb) for tb in bordered_tables)
         ]
         blocks.extend(bordered_tables)
@@ -1081,17 +1116,18 @@ def extract_page(page: fitz.Page, page_num: int) -> PageResult:
     blocks = tag_and_extract_tables(blocks, page, body_size)
 
     content_blocks = [
-        b for b in blocks
-        if b.block_type not in ("header_footer", "boilerplate")
+        b for b in blocks if b.block_type not in ("header_footer", "boilerplate")
     ]
     column_info = detect_columns(content_blocks, page.rect.width, body_size)
 
     ordered_blocks = assemble_reading_order(column_info)
 
     # Re-insert table / caption blocks at correct y-position
-    extra = [b for b in content_blocks
-             if b.block_type in ("table", "figure_caption")
-             and b not in ordered_blocks]
+    extra = [
+        b
+        for b in content_blocks
+        if b.block_type in ("table", "figure_caption") and b not in ordered_blocks
+    ]
     if extra:
         ordered_blocks.extend(extra)
         ordered_blocks.sort(key=lambda b: b.y0)
@@ -1123,7 +1159,11 @@ def extract_page(page: fitz.Page, page_num: int) -> PageResult:
 
     page_area = page.rect.width * page.rect.height
     quality, quality_issues = compute_quality_score(
-        raw_text, blocks, content_blocks, column_info, page_area,
+        raw_text,
+        blocks,
+        content_blocks,
+        column_info,
+        page_area,
     )
 
     return PageResult(
@@ -1161,8 +1201,9 @@ def strip_references_tail(text: str) -> str:
     return text
 
 
-def _try_merge_at(results: list[PageResult], src: int,
-                   search_indices: list[int]) -> int:
+def _try_merge_at(
+    results: list[PageResult], src: int, search_indices: list[int]
+) -> int:
     """Try to merge one split sentence from *search_indices* into
     *results[src]*.  Returns the target page index on success, -1 on failure.
     """
@@ -1170,7 +1211,7 @@ def _try_merge_at(results: list[PageResult], src: int,
     if not prev_text:
         return -1
 
-    prev_lines = prev_text.split('\n')
+    prev_lines = prev_text.split("\n")
     last_idx = -1
     for k in range(len(prev_lines) - 1, -1, -1):
         if prev_lines[k].strip():
@@ -1180,9 +1221,9 @@ def _try_merge_at(results: list[PageResult], src: int,
         return -1
     last_line = prev_lines[last_idx].strip()
 
-    if last_line.startswith('#') or last_line.startswith('['):
+    if last_line.startswith("#") or last_line.startswith("["):
         return -1
-    if last_line[-1] in '.!?:;)':
+    if last_line[-1] in ".!?:;)":
         return -1
 
     # Build search list from the candidate pages
@@ -1196,18 +1237,18 @@ def _try_merge_at(results: list[PageResult], src: int,
     target_page_idx = -1
     next_lines: list[str] = []
     for page_idx, st in search_texts:
-        candidate_lines = st.split('\n')
+        candidate_lines = st.split("\n")
         in_block = False
         for k, line in enumerate(candidate_lines):
             stripped = line.strip()
-            if stripped.startswith('[Table:') or stripped.startswith('[Figure:'):
+            if stripped.startswith("[Table:") or stripped.startswith("[Figure:"):
                 in_block = True
                 continue
             if in_block:
                 if not stripped:
                     in_block = False
                 continue
-            if not stripped or stripped.startswith('#') or stripped.startswith('['):
+            if not stripped or stripped.startswith("#") or stripped.startswith("["):
                 continue
             first_idx = k
             target_page_idx = page_idx
@@ -1223,10 +1264,12 @@ def _try_merge_at(results: list[PageResult], src: int,
     if _BULLET_RE.match(first_line):
         return -1
 
-    last_word = last_line.split()[-1] if last_line.split() else ''
-    continues = (first_line[0].islower() or
-                 (last_word and last_word[-1].islower()) or
-                 last_line.endswith('-'))
+    last_word = last_line.split()[-1] if last_line.split() else ""
+    continues = (
+        first_line[0].islower()
+        or (last_word and last_word[-1].islower())
+        or last_line.endswith("-")
+    )
     if not continues:
         return -1
 
@@ -1234,27 +1277,27 @@ def _try_merge_at(results: list[PageResult], src: int,
     # boundary.  After reflow each paragraph is one very long line, so
     # we must also truncate *within* the first line at the first
     # sentence-ending punctuation.
-    _SENT_END = re.compile(r'[.!?:;)]\s')
+    _SENT_END = re.compile(r"[.!?:;)]\s")
     m_sent = _SENT_END.search(first_line)
     if m_sent:
-        take = first_line[:m_sent.start() + 1]
-        leftover = first_line[m_sent.start() + 1:].lstrip()
+        take = first_line[: m_sent.start() + 1]
+        leftover = first_line[m_sent.start() + 1 :].lstrip()
     else:
         take = first_line
-        leftover = ''
+        leftover = ""
 
-    if last_line.endswith('-'):
+    if last_line.endswith("-"):
         prev_lines[last_idx] = last_line[:-1] + take
     else:
-        prev_lines[last_idx] = last_line + ' ' + take
+        prev_lines[last_idx] = last_line + " " + take
 
-    results[src].text = '\n'.join(prev_lines)
+    results[src].text = "\n".join(prev_lines)
 
     if leftover:
         next_lines[first_idx] = leftover
     else:
         next_lines.pop(first_idx)
-    results[target_page_idx].text = '\n'.join(next_lines)
+    results[target_page_idx].text = "\n".join(next_lines)
     return target_page_idx
 
 
@@ -1293,16 +1336,18 @@ def merge_cross_page_paragraphs(results: list[PageResult]) -> list[PageResult]:
     # non-empty page and attempt one merge.  Uses the same anti-cascade
     # guard as the main loop.
     non_empty = [i for i in range(len(results)) if results[i].text.strip()]
-    touched: set[int] = set()
+    touched_final: set[int] = set()
     for idx in range(len(non_empty) - 1):
         src = non_empty[idx]
-        if src in touched:
+        if src in touched_final:
             continue
-        candidates = [non_empty[j] for j in range(idx + 1, min(idx + 4, len(non_empty)))]
+        candidates = [
+            non_empty[j] for j in range(idx + 1, min(idx + 4, len(non_empty)))
+        ]
         target = _try_merge_at(results, src, candidates)
         if target >= 0:
-            touched.add(src)
-            touched.add(target)
+            touched_final.add(src)
+            touched_final.add(target)
 
     return results
 
@@ -1310,6 +1355,7 @@ def merge_cross_page_paragraphs(results: list[PageResult]) -> list[PageResult]:
 # ---------------------------------------------------------------------------
 # Full-PDF extraction
 # ---------------------------------------------------------------------------
+
 
 def extract_pdf(pdf_path: str, verbose: bool = False) -> tuple[str, ExtractionReport]:
     doc = fitz.open(pdf_path)
@@ -1330,16 +1376,20 @@ def extract_pdf(pdf_path: str, verbose: bool = False) -> tuple[str, ExtractionRe
         report.total_issues += len(result.issues)
         for issue in result.issues:
             issue_type = issue.split(":")[0]
-            report.issue_summary[issue_type] = report.issue_summary.get(issue_type, 0) + 1
+            report.issue_summary[issue_type] = (
+                report.issue_summary.get(issue_type, 0) + 1
+            )
 
-        report.page_results.append({
-            "page": result.page_num,
-            "layout": result.layout,
-            "quality": round(result.quality_score, 2),
-            "issues": result.issues,
-            "headings": result.heading,
-            "char": result.char_count,
-        })
+        report.page_results.append(
+            {
+                "page": result.page_num,
+                "layout": result.layout,
+                "quality": round(result.quality_score, 2),
+                "issues": result.issues,
+                "headings": result.heading,
+                "char": result.char_count,
+            }
+        )
 
         page_results.append(result)
 
@@ -1372,17 +1422,20 @@ def extract_pdf(pdf_path: str, verbose: bool = False) -> tuple[str, ExtractionRe
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Column-aware PDF extractor for RAG systems"
     )
     parser.add_argument("pdf_path", help="Path to PDF file")
     parser.add_argument("--output", "-o", help="Output markdown file path")
-    parser.add_argument("--report", "-r", action="store_true",
-                        help="Print detailed quality report")
+    parser.add_argument(
+        "--report", "-r", action="store_true", help="Print detailed quality report"
+    )
     parser.add_argument("--report-json", help="Save report as JSON")
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Print per-page progress")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Print per-page progress"
+    )
     args = parser.parse_args()
 
     pdf_path = args.pdf_path
@@ -1400,7 +1453,7 @@ def main():
 
     if args.report or args.verbose:
         print(f"\n{'=' * 60}")
-        print(f"EXTRACTION REPORT")
+        print("EXTRACTION REPORT")
         print(f"{'=' * 60}")
         print(f"Total pages:      {report.total_pages}")
         print(f"Single-column:    {report.pages_single_col}")
@@ -1409,32 +1462,39 @@ def main():
         print(f"Average quality:  {report.avg_quality:.2f}")
         print(f"Total issues:     {report.total_issues}")
         if report.issue_summary:
-            print(f"\nIssue breakdown:")
-            for issue, count in sorted(report.issue_summary.items(),
-                                       key=lambda x: -x[1]):
+            print("\nIssue breakdown:")
+            for issue, count in sorted(
+                report.issue_summary.items(), key=lambda x: -x[1]
+            ):
                 print(f"  {issue}: {count}")
 
         low_quality = [p for p in report.page_results if p["quality"] < 0.7]
         if low_quality:
             print(f"\nPages needing review ({len(low_quality)}):")
             for p in low_quality:
-                print(f"  Page {p['page']}: quality={p['quality']:.2f} "
-                      f"issues={p['issues']}")
+                print(
+                    f"  Page {p['page']}: quality={p['quality']:.2f} "
+                    f"issues={p['issues']}"
+                )
 
     if args.report_json:
         with open(args.report_json, "w") as f:
-            json.dump({
-                "total_pages": report.total_pages,
-                "layout_stats": {
-                    "single_column": report.pages_single_col,
-                    "multi_column": report.pages_multi_col,
-                    "other_or_empty": report.pages_other,
+            json.dump(
+                {
+                    "total_pages": report.total_pages,
+                    "layout_stats": {
+                        "single_column": report.pages_single_col,
+                        "multi_column": report.pages_multi_col,
+                        "other_or_empty": report.pages_other,
+                    },
+                    "avg_quality": round(report.avg_quality, 3),
+                    "total_issues": report.total_issues,
+                    "issue_summary": report.issue_summary,
+                    "pages": report.page_results,
                 },
-                "avg_quality": round(report.avg_quality, 3),
-                "total_issues": report.total_issues,
-                "issue_summary": report.issue_summary,
-                "pages": report.page_results,
-            }, f, indent=2)
+                f,
+                indent=2,
+            )
         print(f"Report saved to: {args.report_json}")
 
 

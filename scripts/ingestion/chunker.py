@@ -62,9 +62,7 @@ def count_tokens(text: str, encoding_name: str = "cl100k_base") -> int:
     return len(_get_encoder(encoding_name).encode(text))
 
 
-_PAGE_SEPARATOR_RE = re.compile(
-    r"\n?---\n\*Page \d+.*?\*\n?", re.DOTALL
-)
+_PAGE_SEPARATOR_RE = re.compile(r"\n?---\n\*Page \d+.*?\*\n?", re.DOTALL)
 _EXTRACTED_HEADER_RE = re.compile(r"^# Extracted:.*\n*")
 
 
@@ -72,6 +70,7 @@ def _strip_extraction_metadata(markdown: str) -> str:
     text = _EXTRACTED_HEADER_RE.sub("", markdown)
     text = _PAGE_SEPARATOR_RE.sub("\n", text)
     return text.strip()
+
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$")
 
@@ -102,9 +101,7 @@ def _parse_sections(text: str) -> list[_Section]:
             level = len(m.group(1))
             title = m.group(2).strip()
 
-            heading_stack = [
-                (lvl, ttl) for lvl, ttl in heading_stack if lvl < level
-            ]
+            heading_stack = [(lvl, ttl) for lvl, ttl in heading_stack if lvl < level]
             heading_stack.append((level, title))
 
             current_path = " > ".join(t for _, t in heading_stack)
@@ -158,20 +155,54 @@ def _extract_blocks(text: str) -> list[_Block]:
             para_lines.append(ln)
             i += 1
         if para_lines:
-            blocks.append(
-                _Block(text="\n".join(para_lines), kind="paragraph")
-            )
+            blocks.append(_Block(text="\n".join(para_lines), kind="paragraph"))
 
     return blocks
 
 
-_ABBREVIATIONS = frozenset({
-    "Fig", "fig", "Figs", "figs", "e.g", "i.e", "etc", "al",
-    "Dr", "Mr", "Ms", "Prof", "No", "Vol", "vs", "Eq", "eq",
-    "approx", "cf", "Ref", "ref", "Sect", "sect", "Ch", "ch",
-    "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Inc", "Corp", "Ltd",
-})
+_ABBREVIATIONS = frozenset(
+    {
+        "Fig",
+        "fig",
+        "Figs",
+        "figs",
+        "e.g",
+        "i.e",
+        "etc",
+        "al",
+        "Dr",
+        "Mr",
+        "Ms",
+        "Prof",
+        "No",
+        "Vol",
+        "vs",
+        "Eq",
+        "eq",
+        "approx",
+        "cf",
+        "Ref",
+        "ref",
+        "Sect",
+        "sect",
+        "Ch",
+        "ch",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "Inc",
+        "Corp",
+        "Ltd",
+    }
+)
 
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
 
@@ -197,10 +228,7 @@ def _ends_with_abbreviation(text: str) -> bool:
     return m.group(1) in _ABBREVIATIONS
 
 
-
-def _compute_overlap_text(
-    content: str, overlap_tokens: int, encoding_name: str
-) -> str:
+def _compute_overlap_text(content: str, overlap_tokens: int, encoding_name: str) -> str:
     if overlap_tokens <= 0:
         return ""
     enc = _get_encoder(encoding_name)
@@ -225,9 +253,7 @@ def _assemble_chunks(
         if not section.blocks:
             continue
 
-        flat_blocks = _flatten_blocks(
-            section.blocks, max_tokens, encoding_name
-        )
+        flat_blocks = _flatten_blocks(section.blocks, max_tokens, encoding_name)
         if not flat_blocks:
             continue
 
@@ -252,13 +278,15 @@ def _assemble_chunks(
                 meta["has_figure"] = True
             if token_count > max_tokens:
                 meta["is_oversized"] = True
-            results.append(ChunkResult(
-                content=content,
-                chunk_index=chunk_index,
-                section_path=section.path,
-                token_count=token_count,
-                metadata=meta,
-            ))
+            results.append(
+                ChunkResult(
+                    content=content,
+                    chunk_index=chunk_index,
+                    section_path=section.path,
+                    token_count=token_count,
+                    metadata=meta,
+                )
+            )
             chunk_index += 1
 
         for block_text, kind in flat_blocks:
@@ -333,9 +361,7 @@ def _flatten_blocks(
     return flat
 
 
-def _split_by_tokens(
-    text: str, max_tokens: int, encoding_name: str
-) -> list[str]:
+def _split_by_tokens(text: str, max_tokens: int, encoding_name: str) -> list[str]:
     enc = _get_encoder(encoding_name)
     tokens = enc.encode(text)
     parts: list[str] = []
@@ -368,11 +394,8 @@ def chunk_markdown(
     )
 
 
-
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Markdown chunker for RAG systems"
-    )
+    parser = argparse.ArgumentParser(description="Markdown chunker for RAG systems")
     parser.add_argument("input_md", help="Path to extracted markdown file")
     parser.add_argument("--max-tokens", type=int, default=1024)
     parser.add_argument("--overlap", type=int, default=128)
