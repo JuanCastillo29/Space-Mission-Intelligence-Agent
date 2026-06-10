@@ -7,3 +7,4 @@ psycopg2-binary>=2.9
 huggingface_hub>=0.27
 PyMuPDF>=1.24
 tiktoken>=0.7
+sentence-transformers>=3.0
