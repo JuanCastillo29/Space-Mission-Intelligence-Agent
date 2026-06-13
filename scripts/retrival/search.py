@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Sequence
 from uuid import UUID
 
@@ -39,6 +38,7 @@ async def semantic_search(
     stmt = (
         select(Chunk, score.label("score"))
         .options(selectinload(Chunk.document))
+        .where(Chunk.embedding.is_not(None))
         .order_by(distance.asc())
         .limit(top_k)
     )
@@ -111,10 +111,8 @@ async def hybrid_search(
     *,
     top_k: int = 20,
 ) -> list[ScoredChunk]:
-    semantic_results, keyword_results = await asyncio.gather(
-        semantic_search(query_embedding, session, top_k=100),
-        keyword_search(query, session, top_k=100),
-    )
+    semantic_results = await semantic_search(query_embedding, session, top_k=100)
+    keyword_results = await keyword_search(query, session, top_k=100)
 
     return reciprocal_rank_fusion(
         semantic_results,
