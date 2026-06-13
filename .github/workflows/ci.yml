@@ -81,6 +81,3 @@ jobs:
 
       - name: Build dev image
         run: docker build -f docker/dev.dockerfile -t space-agent-dev:test .
-
-      - name: Build ingestion image
-        run: docker build -f docker/ingestion.dockerfile -t space-agent-ingestion:test .
