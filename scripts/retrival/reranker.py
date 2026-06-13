@@ -15,9 +15,9 @@ class BGEReranker:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_name
-        ).to(self.device)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_name).to(
+            self.device
+        )
 
         self.model.eval()
 
@@ -58,11 +58,8 @@ class BGEReranker:
         documents = [c.content for c in chunks]
         scores = self.score_pairs(query, documents, batch_size=batch_size)
 
-        scored = sorted(
-            zip(chunks, scores), key=lambda pair: pair[1], reverse=True
-        )
+        scored = sorted(zip(chunks, scores), key=lambda pair: pair[1], reverse=True)
 
         return [
-            chunk.model_copy(update={"score": score})
-            for chunk, score in scored[:top_k]
+            chunk.model_copy(update={"score": score}) for chunk, score in scored[:top_k]
         ]

@@ -63,13 +63,9 @@ class RetrievalPipeline:
     ) -> RetrievalResult:
         query_embedding = self._embed_query(query)
 
-        fused = await hybrid_search(
-            query, query_embedding, session, top_k=search_top_k
-        )
+        fused = await hybrid_search(query, query_embedding, session, top_k=search_top_k)
 
-        reranked = self.reranker.rerank(
-            query, fused, top_k=rerank_top_k
-        )
+        reranked = self.reranker.rerank(query, fused, top_k=rerank_top_k)
 
         diverse = mmr_diversity_filter(
             reranked, top_k=final_top_k, lambda_param=mmr_lambda

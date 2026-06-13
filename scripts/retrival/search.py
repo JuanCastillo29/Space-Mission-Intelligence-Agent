@@ -45,10 +45,7 @@ async def semantic_search(
 
     result = await session.execute(stmt)
 
-    return [
-        _chunk_to_scored(chunk, float(sc))
-        for chunk, sc in result.all()
-    ]
+    return [_chunk_to_scored(chunk, float(sc)) for chunk, sc in result.all()]
 
 
 async def keyword_search(
@@ -71,10 +68,7 @@ async def keyword_search(
 
     result = await session.execute(stmt)
 
-    return [
-        _chunk_to_scored(chunk, float(sc))
-        for chunk, sc in result.all()
-    ]
+    return [_chunk_to_scored(chunk, float(sc)) for chunk, sc in result.all()]
 
 
 def reciprocal_rank_fusion(

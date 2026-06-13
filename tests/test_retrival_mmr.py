@@ -89,9 +89,7 @@ class TestMMRDiversityFilter:
         mid = _make_scored(score=0.90, embedding=[0.99, 0.01])
         low = _make_scored(score=0.3, embedding=[0.0, 1.0])
 
-        result = mmr_diversity_filter(
-            [high, mid, low], top_k=2, lambda_param=0.99
-        )
+        result = mmr_diversity_filter([high, mid, low], top_k=2, lambda_param=0.99)
         ids = [r.chunk_id for r in result]
         assert ids[0] == high.chunk_id
         assert ids[1] == mid.chunk_id
@@ -156,8 +154,7 @@ class TestAssembleContext:
     def test_multiple_chunks_numbered_sequentially(self):
         doc_id = uuid.uuid4()
         chunks = [
-            _make_scored(document_id=doc_id, content=f"Content {i}")
-            for i in range(3)
+            _make_scored(document_id=doc_id, content=f"Content {i}") for i in range(3)
         ]
         titles = {str(doc_id): "Doc"}
 

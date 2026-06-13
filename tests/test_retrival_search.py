@@ -124,10 +124,14 @@ class TestSemanticSearch:
     async def test_returns_results_ordered_by_similarity(self, async_session):
         close_emb = _norm(_embedding(0.0, index=0))
         far_emb = _norm(_embedding(0.0, index=1))
-        await _seed_doc_and_chunks(async_session, "sem1", [
-            ("close chunk", 0, close_emb),
-            ("far chunk", 1, far_emb),
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "sem1",
+            [
+                ("close chunk", 0, close_emb),
+                ("far chunk", 1, far_emb),
+            ],
+        )
 
         query_emb = _norm(_embedding(0.0, index=0))
         results = await semantic_search(query_emb, async_session, top_k=10)
@@ -136,37 +140,41 @@ class TestSemanticSearch:
 
     @pytest.mark.asyncio
     async def test_top_k_limits_results(self, async_session):
-        await _seed_doc_and_chunks(async_session, "sem2", [
-            (f"chunk {i}", i, _norm(_embedding(0.1))) for i in range(5)
-        ])
-
-        results = await semantic_search(
-            _norm(_embedding(0.1)), async_session, top_k=2
+        await _seed_doc_and_chunks(
+            async_session,
+            "sem2",
+            [(f"chunk {i}", i, _norm(_embedding(0.1))) for i in range(5)],
         )
+
+        results = await semantic_search(_norm(_embedding(0.1)), async_session, top_k=2)
         assert len(results) <= 2
 
     @pytest.mark.asyncio
     async def test_scores_are_positive(self, async_session):
-        await _seed_doc_and_chunks(async_session, "sem3", [
-            ("positive score", 0, _norm(_embedding(0.5))),
-        ])
-
-        results = await semantic_search(
-            _norm(_embedding(0.5)), async_session, top_k=10
+        await _seed_doc_and_chunks(
+            async_session,
+            "sem3",
+            [
+                ("positive score", 0, _norm(_embedding(0.5))),
+            ],
         )
+
+        results = await semantic_search(_norm(_embedding(0.5)), async_session, top_k=10)
         for r in results:
             assert r.score >= 0
 
     @pytest.mark.asyncio
     async def test_carries_embedding_through(self, async_session):
         emb = _norm(_embedding(0.2))
-        await _seed_doc_and_chunks(async_session, "sem4", [
-            ("with embedding", 0, emb),
-        ])
-
-        results = await semantic_search(
-            _norm(_embedding(0.2)), async_session, top_k=10
+        await _seed_doc_and_chunks(
+            async_session,
+            "sem4",
+            [
+                ("with embedding", 0, emb),
+            ],
         )
+
+        results = await semantic_search(_norm(_embedding(0.2)), async_session, top_k=10)
         assert len(results) >= 1
         assert results[0].embedding is not None
 
@@ -174,10 +182,14 @@ class TestSemanticSearch:
 class TestKeywordSearch:
     @pytest.mark.asyncio
     async def test_finds_matching_chunks(self, async_session):
-        await _seed_doc_and_chunks(async_session, "kw1", [
-            ("thermal analysis of spacecraft propulsion system", 0, None),
-            ("orbital mechanics calculation results", 1, None),
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "kw1",
+            [
+                ("thermal analysis of spacecraft propulsion system", 0, None),
+                ("orbital mechanics calculation results", 1, None),
+            ],
+        )
 
         results = await keyword_search("thermal spacecraft", async_session, top_k=10)
         assert len(results) >= 1
@@ -185,28 +197,38 @@ class TestKeywordSearch:
 
     @pytest.mark.asyncio
     async def test_no_match_returns_empty(self, async_session):
-        await _seed_doc_and_chunks(async_session, "kw2", [
-            ("completely unrelated content about biology", 0, None),
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "kw2",
+            [
+                ("completely unrelated content about biology", 0, None),
+            ],
+        )
 
         results = await keyword_search("xylophone quaternion", async_session, top_k=10)
         assert len(results) == 0
 
     @pytest.mark.asyncio
     async def test_top_k_limits_results(self, async_session):
-        await _seed_doc_and_chunks(async_session, "kw3", [
-            (f"spacecraft mission report number {i}", i, None) for i in range(5)
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "kw3",
+            [(f"spacecraft mission report number {i}", i, None) for i in range(5)],
+        )
 
         results = await keyword_search("spacecraft mission", async_session, top_k=2)
         assert len(results) <= 2
 
     @pytest.mark.asyncio
     async def test_ranking_order(self, async_session):
-        await _seed_doc_and_chunks(async_session, "kw4", [
-            ("thermal thermal thermal thermal analysis", 0, None),
-            ("one mention of thermal", 1, None),
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "kw4",
+            [
+                ("thermal thermal thermal thermal analysis", 0, None),
+                ("one mention of thermal", 1, None),
+            ],
+        )
 
         results = await keyword_search("thermal", async_session, top_k=10)
         if len(results) >= 2:
@@ -217,10 +239,18 @@ class TestHybridSearch:
     @pytest.mark.asyncio
     async def test_combines_semantic_and_keyword(self, async_session):
         emb = _norm(_embedding(0.0, index=0))
-        await _seed_doc_and_chunks(async_session, "hyb1", [
-            ("spacecraft thermal control subsystem design requirements", 0, emb),
-            ("orbital debris mitigation strategy document", 1, _norm(_embedding(0.0, index=1))),
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "hyb1",
+            [
+                ("spacecraft thermal control subsystem design requirements", 0, emb),
+                (
+                    "orbital debris mitigation strategy document",
+                    1,
+                    _norm(_embedding(0.0, index=1)),
+                ),
+            ],
+        )
 
         query_emb = _norm(_embedding(0.0, index=0))
         results = await hybrid_search(
@@ -230,9 +260,13 @@ class TestHybridSearch:
 
     @pytest.mark.asyncio
     async def test_returns_scored_chunks(self, async_session):
-        await _seed_doc_and_chunks(async_session, "hyb2", [
-            ("propulsion system performance analysis", 0, _norm(_embedding(0.3))),
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "hyb2",
+            [
+                ("propulsion system performance analysis", 0, _norm(_embedding(0.3))),
+            ],
+        )
 
         results = await hybrid_search(
             "propulsion", _norm(_embedding(0.3)), async_session, top_k=5
@@ -243,10 +277,14 @@ class TestHybridSearch:
 
     @pytest.mark.asyncio
     async def test_top_k_respected(self, async_session):
-        await _seed_doc_and_chunks(async_session, "hyb3", [
-            (f"spacecraft telemetry data point {i}", i, _norm(_embedding(0.1)))
-            for i in range(10)
-        ])
+        await _seed_doc_and_chunks(
+            async_session,
+            "hyb3",
+            [
+                (f"spacecraft telemetry data point {i}", i, _norm(_embedding(0.1)))
+                for i in range(10)
+            ],
+        )
 
         results = await hybrid_search(
             "spacecraft telemetry", _norm(_embedding(0.1)), async_session, top_k=3
