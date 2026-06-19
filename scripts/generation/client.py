@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 @runtime_checkable
 class ChatClient(Protocol):
-
     async def complete(
         self,
         messages: list[ChatMessage],
@@ -47,10 +46,7 @@ class GroqClient:
             model=self._model,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
-            messages=[
-                {"role": m.role, "content": m.content}
-                for m in messages
-            ],
+            messages=[{"role": m.role, "content": m.content} for m in messages],
         )
 
         content = response.choices[0].message.content or ""
@@ -86,10 +82,7 @@ class MistralClient:
             model=self._model,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
-            messages=[
-                {"role": m.role, "content": m.content}
-                for m in messages
-            ],
+            messages=[{"role": m.role, "content": m.content} for m in messages],
         )
 
         content = response.choices[0].message.content or ""

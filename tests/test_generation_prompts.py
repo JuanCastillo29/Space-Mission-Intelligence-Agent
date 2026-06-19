@@ -20,8 +20,10 @@ class TestBuildSystemPrompt:
 
     def test_contains_insufficient_context_handling(self):
         prompt = build_system_prompt()
-        assert "don't have sufficient information" in prompt.lower() or \
-               "I don't have sufficient" in prompt
+        assert (
+            "don't have sufficient information" in prompt.lower()
+            or "I don't have sufficient" in prompt
+        )
 
 
 class TestBuildUserPrompt:

@@ -6,7 +6,12 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scripts.generation.citations import postprocess_response
-from scripts.generation.client import ChatClient, FallbackClient, GroqClient, MistralClient
+from scripts.generation.client import (
+    ChatClient,
+    FallbackClient,
+    GroqClient,
+    MistralClient,
+)
 from scripts.generation.config import GenerationSettings
 from scripts.generation.prompt import build_system_prompt, build_user_prompt
 from scripts.generation.router import QueryRouter

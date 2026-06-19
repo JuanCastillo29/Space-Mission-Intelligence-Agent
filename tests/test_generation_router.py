@@ -11,7 +11,10 @@ from scripts.generation.schemas import QueryType
 
 def _mock_client(response_text: str) -> AsyncMock:
     client = AsyncMock()
-    client.complete.return_value = (response_text, {"prompt_tokens": 5, "completion_tokens": 10})
+    client.complete.return_value = (
+        response_text,
+        {"prompt_tokens": 5, "completion_tokens": 10},
+    )
     return client
 
 
@@ -52,11 +55,13 @@ class TestKeywordFastPath:
 class TestLLMClassification:
     @pytest.mark.asyncio
     async def test_retrieval_query(self):
-        response = json.dumps({
-            "query_type": "retrieval",
-            "confidence": 0.9,
-            "reasoning": "document lookup",
-        })
+        response = json.dumps(
+            {
+                "query_type": "retrieval",
+                "confidence": 0.9,
+                "reasoning": "document lookup",
+            }
+        )
         router = QueryRouter(client=_mock_client(response))
         result = await router.classify("What were the goals of Rosetta?")
         assert result.query_type == QueryType.RETRIEVAL
@@ -64,22 +69,26 @@ class TestLLMClassification:
 
     @pytest.mark.asyncio
     async def test_structured_query(self):
-        response = json.dumps({
-            "query_type": "structured",
-            "confidence": 0.85,
-            "reasoning": "needs database",
-        })
+        response = json.dumps(
+            {
+                "query_type": "structured",
+                "confidence": 0.85,
+                "reasoning": "needs database",
+            }
+        )
         router = QueryRouter(client=_mock_client(response))
         result = await router.classify("How many active satellites are there?")
         assert result.query_type == QueryType.STRUCTURED
 
     @pytest.mark.asyncio
     async def test_hybrid_query(self):
-        response = json.dumps({
-            "query_type": "hybrid",
-            "confidence": 0.8,
-            "reasoning": "needs both",
-        })
+        response = json.dumps(
+            {
+                "query_type": "hybrid",
+                "confidence": 0.8,
+                "reasoning": "needs both",
+            }
+        )
         router = QueryRouter(client=_mock_client(response))
         result = await router.classify("Compare Rosetta orbit with current debris")
         assert result.query_type == QueryType.HYBRID

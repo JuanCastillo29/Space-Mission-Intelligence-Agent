@@ -24,19 +24,14 @@ def build_system_prompt() -> str:
         "\n"
         "HANDLING INSUFFICIENT CONTEXT:\n"
         "- If no relevant context is provided, state: \"I don't have sufficient "
-        "information in the available documents to answer this question.\"\n"
+        'information in the available documents to answer this question."\n'
         "- If only partial information is available, answer what you can and "
         "note the gaps."
     )
 
 
 def build_user_prompt(query: str, context_text: str) -> str:
-    return (
-        f"## Source Documents\n\n"
-        f"{context_text}\n\n"
-        f"## Question\n\n"
-        f"{query}"
-    )
+    return f"## Source Documents\n\n{context_text}\n\n## Question\n\n{query}"
 
 
 def build_routing_prompt(query: str) -> str:
