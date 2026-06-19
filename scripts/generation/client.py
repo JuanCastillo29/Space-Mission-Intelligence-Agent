@@ -9,7 +9,7 @@ from groq import (
     AsyncGroq,
     RateLimitError,
 )
-from mistralai import Mistral
+from mistralai.client import Mistral
 
 from scripts.generation.schemas import ChatMessage
 
