@@ -9,7 +9,14 @@ from groq import (
     AsyncGroq,
     RateLimitError,
 )
+from groq.types.chat import (
+    ChatCompletionAssistantMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 from mistralai.client import Mistral
+from mistralai.client.models.systemmessage import SystemMessage
+from mistralai.client.models.usermessage import UserMessage
 
 from scripts.generation.schemas import ChatMessage
 
@@ -42,11 +49,28 @@ class GroqClient:
         self,
         messages: list[ChatMessage],
     ) -> tuple[str, dict[str, int]]:
+        _role_map: dict[
+            str,
+            type[
+                ChatCompletionSystemMessageParam
+                | ChatCompletionUserMessageParam
+                | ChatCompletionAssistantMessageParam
+            ],
+        ] = {
+            "system": ChatCompletionSystemMessageParam,
+            "user": ChatCompletionUserMessageParam,
+            "assistant": ChatCompletionAssistantMessageParam,
+        }
+        groq_messages = [
+            _role_map[m.role](role=m.role, content=m.content)  # type: ignore[arg-type]
+            for m in messages
+        ]
+
         response = await self._client.chat.completions.create(
             model=self._model,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
-            messages=[{"role": m.role, "content": m.content} for m in messages],
+            messages=groq_messages,
         )
 
         content = response.choices[0].message.content or ""
@@ -78,19 +102,28 @@ class MistralClient:
         self,
         messages: list[ChatMessage],
     ) -> tuple[str, dict[str, int]]:
+        mistral_messages: list[SystemMessage | UserMessage] = [
+            SystemMessage(content=m.content, role="system")
+            if m.role == "system"
+            else UserMessage(content=m.content, role="user")
+            for m in messages
+        ]
+
         response = await self._client.chat.complete_async(
             model=self._model,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
-            messages=[{"role": m.role, "content": m.content} for m in messages],
+            messages=mistral_messages,  # type: ignore[arg-type]
         )
 
-        content = response.choices[0].message.content or ""
+        assert response is not None
+        content = response.choices[0].message.content  # type: ignore[union-attr,index]
+        assert isinstance(content, str)
 
         usage = response.usage
-        token_usage = {
-            "prompt_tokens": usage.prompt_tokens if usage else 0,
-            "completion_tokens": usage.completion_tokens if usage else 0,
+        token_usage: dict[str, int] = {
+            "prompt_tokens": usage.prompt_tokens or 0 if usage else 0,
+            "completion_tokens": usage.completion_tokens or 0 if usage else 0,
         }
 
         return content, token_usage
