@@ -27,13 +27,16 @@ def _build_default_client(settings: GenerationSettings) -> ChatClient:
         temperature=settings.LLM_TEMPERATURE,
         max_tokens=settings.LLM_MAX_TOKENS,
     )
-    fallback = MistralClient(
-        api_key=os.environ["MISTRAL_API_KEY"],
-        model=settings.LLM_FALLBACK_MODEL,
-        temperature=settings.LLM_TEMPERATURE,
-        max_tokens=settings.LLM_MAX_TOKENS,
-    )
-    return FallbackClient(primary, fallback)
+    mistral_key = os.environ.get("MISTRAL_API_KEY")
+    if mistral_key:
+        fallback = MistralClient(
+            api_key=mistral_key,
+            model=settings.LLM_FALLBACK_MODEL,
+            temperature=settings.LLM_TEMPERATURE,
+            max_tokens=settings.LLM_MAX_TOKENS,
+        )
+        return FallbackClient(primary, fallback)
+    return primary
 
 
 class GenerationPipeline:
