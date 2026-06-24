@@ -30,7 +30,7 @@ jobs:
         run: ruff format --check .
 
       - name: Mypy
-        run: mypy db scripts --ignore-missing-imports
+        run: mypy db scripts app --ignore-missing-imports
 
   test:
     name: Tests
