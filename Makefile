@@ -1,4 +1,4 @@
-.PHONY: install dev lint format test test-cov ingest query evaluate up down build shell clean migrate seed
+.PHONY: install dev lint format test test-cov ingest query serve evaluate up down build shell clean migrate seed
 
 install:
 	pip install -r requirements/requirements.txt
@@ -9,7 +9,7 @@ dev:
 lint:
 	ruff check .
 	ruff format --check .
-	mypy db scripts --ignore-missing-imports
+	mypy db scripts app --ignore-missing-imports
 
 format:
 	ruff check --fix .
@@ -26,6 +26,9 @@ ingest:
 
 query:
 	python -m app.main
+
+serve:
+	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 evaluate:
 	python -m evaluation.run
