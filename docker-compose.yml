@@ -57,6 +57,18 @@ services:
     volumes:
       - ./data:/opt/project/data
 
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.dockerfile
+    container_name: space-frontend
+    depends_on:
+      - api
+    environment:
+      API_BASE_URL: http://api:8000/api/v1
+    ports:
+      - "8501:8501"
+
   dev_space:
     build:
       context: .
