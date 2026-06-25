@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 2 44 48" fill="none">
+  <!-- Astronaut helmet -->
+  <circle cx="32" cy="30" r="18" stroke="#4FC3F7" stroke-width="2.5" fill="rgba(79,195,247,0.06)"/>
+  <!-- Visor -->
+  <path d="M20 28 Q22 18 32 16 Q42 18 44 28 Q44 36 32 38 Q20 36 20 28Z" stroke="#AB82FF" stroke-width="2" fill="rgba(171,130,255,0.1)"/>
+  <!-- Visor reflection -->
+  <path d="M24 24 Q28 20 34 22" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Helmet earpiece left -->
+  <rect x="12" y="26" width="5" height="10" rx="2.5" fill="rgba(79,195,247,0.15)" stroke="#4FC3F7" stroke-width="1.5"/>
+  <!-- Helmet earpiece right -->
+  <rect x="47" y="26" width="5" height="10" rx="2.5" fill="rgba(79,195,247,0.15)" stroke="#4FC3F7" stroke-width="1.5"/>
+  <!-- Suit collar -->
+  <path d="M18 46 Q20 40 32 40 Q44 40 46 46" stroke="#4FC3F7" stroke-width="2" fill="rgba(79,195,247,0.06)" stroke-linecap="round"/>
+  <!-- Antenna on top -->
+  <line x1="32" y1="12" x2="32" y2="6" stroke="#4FC3F7" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="32" cy="5" r="2" fill="#AB82FF"/>
+</svg>

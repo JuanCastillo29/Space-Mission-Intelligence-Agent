@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Chat bubble -->
+  <path d="M8 10 H36 Q40 10 40 14 V28 Q40 32 36 32 H18 L10 38 V32 H8 Q4 32 4 28 V14 Q4 10 8 10Z" stroke="#4FC3F7" stroke-width="2" fill="rgba(79,195,247,0.08)"/>
+  <!-- Signal dots -->
+  <circle cx="16" cy="21" r="2" fill="#AB82FF"/>
+  <circle cx="24" cy="21" r="2" fill="#AB82FF"/>
+  <circle cx="32" cy="21" r="2" fill="#AB82FF"/>
+</svg>
