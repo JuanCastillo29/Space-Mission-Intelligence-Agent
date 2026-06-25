@@ -44,13 +44,13 @@ def _fmt(dot: str, kind: str) -> tuple[str, str]:
 
 # ── Sidebar ──
 with st.sidebar:
-    sidebar_sat = svg_to_img_tag("avatar_bot", 52, 52)
     st.markdown(
-        f"""
+        """
         <div class="sidebar-brand">
-            <div style="margin-bottom:4px;">{sidebar_sat}</div>
-            <div class="sidebar-brand-title">Space Mission<br>Intelligence</div>
-            <div class="sidebar-brand-sub">RAG-Powered Q&A</div>
+            <div class="sidebar-brand-mark">
+                <span class="sidebar-brand-acronym">SMI</span>
+            </div>
+            <div class="sidebar-brand-sub">Space Mission Intel</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -115,19 +115,34 @@ chat_icon = svg_to_img_tag("icon_chat", 56, 56)
 search_icon = svg_to_img_tag("icon_search", 56, 56)
 docs_icon = svg_to_img_tag("icon_docs", 56, 56)
 
+# ── Dashboard frame with corner accents ──
+st.markdown(
+    """
+    <div class="dashboard-frame">
+        <span class="dashboard-corner-tr"></span>
+        <span class="dashboard-corner-bl"></span>
+        <span class="coord-stamp top-left">COORD // 03.14.15</span>
+        <span class="coord-stamp bot-right">SEC // ALPHA-7</span>
+        <div class="frame-label">// Active Modules //</div>
+    """,
+    unsafe_allow_html=True,
+)
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(
         f"""
         <div class="feature-card">
+            <span class="corner-tr"></span>
+            <span class="corner-bl"></span>
+            <span class="feature-card-serial">SMI-MOD-001</span>
             <div class="feature-icon">{chat_icon}</div>
             <div class="feature-title">Mission Chat</div>
             <div class="feature-desc">
                 Ask questions about ESA & NASA missions.
                 Get cited answers grounded in real documents.
             </div>
-            <span class="feature-card-serial">SMI-MOD-001</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -137,13 +152,15 @@ with col2:
     st.markdown(
         f"""
         <div class="feature-card">
+            <span class="corner-tr"></span>
+            <span class="corner-bl"></span>
+            <span class="feature-card-serial">SMI-MOD-002</span>
             <div class="feature-icon">{search_icon}</div>
             <div class="feature-title">Hybrid Search</div>
             <div class="feature-desc">
                 Semantic + keyword search with cross-encoder
                 reranking and MMR diversity filtering.
             </div>
-            <span class="feature-card-serial">SMI-MOD-002</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -153,17 +170,22 @@ with col3:
     st.markdown(
         f"""
         <div class="feature-card">
+            <span class="corner-tr"></span>
+            <span class="corner-bl"></span>
+            <span class="feature-card-serial">SMI-MOD-003</span>
             <div class="feature-icon">{docs_icon}</div>
             <div class="feature-title">Document Library</div>
             <div class="feature-desc">
                 Browse 40+ ingested mission documents
                 from ESA, NASA, and research archives.
             </div>
-            <span class="feature-card-serial">SMI-MOD-003</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+# Close dashboard frame
+st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 

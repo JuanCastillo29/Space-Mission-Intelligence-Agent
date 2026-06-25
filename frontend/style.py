@@ -1,20 +1,35 @@
 from __future__ import annotations
 
+import base64
+from pathlib import Path
+
 import streamlit as st
 import streamlit.components.v1 as _components
 
-_CSS = """
+_ASSETS = Path(__file__).resolve().parent / "assets"
+
+
+def _load_orbital_bg() -> str:
+    svg = (_ASSETS / "bg_orbital.svg").read_text()
+    b64 = base64.b64encode(svg.encode()).decode()
+    return f"data:image/svg+xml;base64,{b64}"
+
+
+_ORBITAL_BG_URI = _load_orbital_bg()
+
+_CSS_TEMPLATE = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap');
 
 /* ── CSS variables ── */
 :root {
     --cyan: #4FC3F7;
+    --cyan-bright: #00D4FF;
     --purple: #AB82FF;
     --bg-deep: #060910;
-    --bg-card: rgba(255,255,255,0.03);
-    --border-cyan: rgba(79,195,247,0.18);
-    --border-purple: rgba(171,130,255,0.15);
+    --bg-card: rgba(12,20,38,0.65);
+    --border-cyan: rgba(0,212,255,0.22);
+    --border-purple: rgba(171,130,255,0.18);
     --glow-cyan: rgba(79,195,247,0.35);
     --glow-purple: rgba(171,130,255,0.30);
     --text-primary: #E8ECF0;
@@ -24,18 +39,23 @@ _CSS = """
     --font-mono: 'Share Tech Mono', monospace;
 }
 
-/* ── Data-grid background ── */
+/* ── Data-grid + radial depth background ── */
 body::before {
     content: '';
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
-    z-index: -2;
-    background-image:
-        linear-gradient(rgba(79,195,247,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(79,195,247,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
+    z-index: -3;
+    background:
+        /* Radial depth gradient – soft vignette from center */
+        radial-gradient(ellipse at 50% 40%, rgba(10,24,50,0.5) 0%, transparent 65%),
+        radial-gradient(ellipse at 80% 20%, rgba(79,195,247,0.04) 0%, transparent 40%),
+        radial-gradient(ellipse at 15% 70%, rgba(171,130,255,0.03) 0%, transparent 40%),
+        /* Grid lines */
+        linear-gradient(rgba(79,195,247,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,195,247,0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 60px 60px, 60px 60px;
 }
 
 body::after {
@@ -44,7 +64,7 @@ body::after {
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
-    z-index: -1;
+    z-index: -2;
     background:
         radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.45), transparent),
         radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.3), transparent),
@@ -57,6 +77,48 @@ body::after {
         radial-gradient(1px 1px at 65% 35%, rgba(255,255,255,0.35), transparent),
         radial-gradient(2px 2px at 80% 55%, rgba(171,130,255,0.35), transparent);
 }
+
+/* Force stApp background transparent so overlays show */
+.stApp {
+    background: transparent !important;
+}
+
+/* ── Orbital trajectory + starfield SVG overlay ── */
+.stApp::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url('{{ORBITAL_BG}}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Ensure main content stays above the overlay */
+.stApp > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Edge coordinate markers */
+.edge-coord {
+    position: fixed;
+    font-family: var(--font-mono);
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(79,195,247,0.06);
+    pointer-events: none;
+    z-index: -1;
+    user-select: none;
+}
+
+.edge-coord.tl { top: 10px; left: 24px; }
+.edge-coord.tr { top: 10px; right: 24px; color: rgba(171,130,255,0.06); }
+.edge-coord.bl { bottom: 10px; left: 24px; }
+.edge-coord.br { bottom: 10px; right: 24px; color: rgba(171,130,255,0.06); }
 
 /* ── Orbitron headers with glow ── */
 h1, h2, h3 {
@@ -84,6 +146,13 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #080c14 0%, #060910 100%) !important;
     border-right: 1px solid var(--border-cyan);
     box-shadow: 1px 0 20px rgba(79,195,247,0.05);
+}
+
+/* Sidebar nav items – command prompt style */
+section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"] span {
+    font-family: var(--font-mono) !important;
+    letter-spacing: 1px;
+    font-size: 0.9em !important;
 }
 
 /* ── Pulsing status dots ── */
@@ -171,43 +240,78 @@ section[data-testid="stSidebar"] {
 .status-value.offline { color: #EF5350; text-shadow: 0 0 6px rgba(239,83,80,0.4); }
 .status-value.degraded { color: #FFA726; text-shadow: 0 0 6px rgba(255,167,38,0.4); }
 
-/* ── Sidebar brand ── */
+/* ── Sidebar brand – minimal crosshair + acronym ── */
 .sidebar-brand {
     text-align: center;
-    padding: 8px 0 4px;
+    padding: 10px 0 6px;
+    position: relative;
 }
 
-.sidebar-brand-title {
+.sidebar-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 2px;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+/* Crosshair corners on the brand mark */
+.sidebar-brand-mark::before,
+.sidebar-brand-mark::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+}
+.sidebar-brand-mark::before {
+    top: -2px; left: -2px;
+    border-top: 2px solid var(--cyan);
+    border-left: 2px solid var(--cyan);
+}
+.sidebar-brand-mark::after {
+    bottom: -2px; right: -2px;
+    border-bottom: 2px solid var(--purple);
+    border-right: 2px solid var(--purple);
+}
+
+.sidebar-brand-acronym {
     font-family: var(--font-display);
-    font-size: 1.05em;
+    font-size: 0.85em;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--cyan), var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 8px var(--glow-cyan));
-    margin: 0;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px var(--glow-cyan);
 }
 
 .sidebar-brand-sub {
     font-family: var(--font-mono);
-    font-size: 0.68em;
-    color: var(--text-muted);
-    letter-spacing: 3px;
+    font-size: 0.58em;
+    color: rgba(79,195,247,0.35);
+    letter-spacing: 2px;
     text-transform: uppercase;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
-/* ── Version badge ── */
+/* ── Version badge – neon outline + hover glow ── */
 .version-badge {
     display: inline-block;
-    background: rgba(79,195,247,0.08);
-    border: 1px solid rgba(79,195,247,0.2);
+    background: rgba(79,195,247,0.06);
+    border: 1px solid rgba(0,212,255,0.3);
     border-radius: 2px;
-    padding: 2px 14px;
+    padding: 3px 14px;
     font-size: 0.68em;
     color: var(--cyan);
     letter-spacing: 2px;
     font-family: var(--font-mono);
+    box-shadow: 0 0 6px rgba(79,195,247,0.15), inset 0 0 6px rgba(79,195,247,0.05);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.version-badge:hover {
+    border-color: rgba(0,212,255,0.6);
+    box-shadow: 0 0 14px rgba(79,195,247,0.35), inset 0 0 10px rgba(79,195,247,0.08);
 }
 
 /* ── Hero ── */
@@ -255,11 +359,76 @@ section[data-testid="stSidebar"] {
     100% { background-position: 0% center; }
 }
 
-/* ── Feature cards – glassmorphism + chamfered ── */
+/* ── Dashboard frame – outer bounding box ── */
+.dashboard-frame {
+    border: 1px solid rgba(0,212,255,0.1);
+    border-radius: 4px;
+    padding: 28px 20px 24px;
+    position: relative;
+    margin: 0 8px;
+}
+
+/* Corner accents on the dashboard frame */
+.dashboard-frame::before,
+.dashboard-frame::after {
+    content: '';
+    position: absolute;
+    width: 24px; height: 24px;
+    border-color: rgba(0,212,255,0.3);
+    border-style: solid;
+}
+.dashboard-frame::before {
+    top: -1px; left: -1px;
+    border-width: 2px 0 0 2px;
+}
+.dashboard-frame::after {
+    bottom: -1px; right: -1px;
+    border-width: 0 2px 2px 0;
+}
+
+/* Extra corners via inner spans */
+.dashboard-corner-tr {
+    position: absolute;
+    top: -1px; right: -1px;
+    width: 24px; height: 24px;
+    border-top: 2px solid rgba(171,130,255,0.3);
+    border-right: 2px solid rgba(171,130,255,0.3);
+}
+.dashboard-corner-bl {
+    position: absolute;
+    bottom: -1px; left: -1px;
+    width: 24px; height: 24px;
+    border-bottom: 2px solid rgba(171,130,255,0.3);
+    border-left: 2px solid rgba(171,130,255,0.3);
+}
+
+/* Coordinate stamps */
+.coord-stamp {
+    font-family: var(--font-mono);
+    font-size: 0.5em;
+    color: rgba(79,195,247,0.2);
+    letter-spacing: 1px;
+    position: absolute;
+}
+.coord-stamp.top-left  { top: 6px; left: 28px; }
+.coord-stamp.bot-right { bottom: 6px; right: 28px; }
+
+/* Section label inside frame */
+.frame-label {
+    font-family: var(--font-mono);
+    font-size: 0.62em;
+    color: rgba(79,195,247,0.25);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+/* ── Feature cards – glassmorphism + segmented neon brackets ── */
 .feature-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: linear-gradient(165deg, rgba(14,26,48,0.75) 0%, rgba(8,16,32,0.6) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-cyan);
     border-radius: 4px;
     padding: 32px 24px 28px;
@@ -268,38 +437,65 @@ section[data-testid="stSidebar"] {
     height: 100%;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-/* Corner brackets */
+/* Segmented neon corner brackets */
 .feature-card::before,
 .feature-card::after {
     content: '';
     position: absolute;
-    width: 18px; height: 18px;
-    border-color: var(--cyan);
+    width: 20px; height: 20px;
+    border-color: var(--cyan-bright);
     border-style: solid;
-    opacity: 0.3;
-    transition: opacity 0.35s ease;
+    opacity: 0.25;
+    transition: opacity 0.35s ease, border-color 0.35s ease;
 }
 .feature-card::before {
     top: 6px; left: 6px;
-    border-width: 1px 0 0 1px;
+    border-width: 1.5px 0 0 1.5px;
 }
 .feature-card::after {
     bottom: 6px; right: 6px;
-    border-width: 0 1px 1px 0;
+    border-width: 0 1.5px 1.5px 0;
+}
+
+/* Extra corners via inner spans */
+.feature-card .corner-tr {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 20px; height: 20px;
+    border-top: 1.5px solid var(--purple);
+    border-right: 1.5px solid var(--purple);
+    opacity: 0.2;
+    transition: opacity 0.35s ease;
+}
+.feature-card .corner-bl {
+    position: absolute;
+    bottom: 6px; left: 6px;
+    width: 20px; height: 20px;
+    border-bottom: 1.5px solid var(--purple);
+    border-left: 1.5px solid var(--purple);
+    opacity: 0.2;
+    transition: opacity 0.35s ease;
 }
 
 .feature-card:hover {
-    border-color: rgba(79,195,247,0.5);
+    border-color: rgba(0,212,255,0.45);
     box-shadow:
-        0 0 30px rgba(79,195,247,0.1),
+        0 0 30px rgba(79,195,247,0.12),
         inset 0 0 30px rgba(79,195,247,0.03);
     transform: translateY(-3px);
+    background: linear-gradient(165deg, rgba(18,32,56,0.8) 0%, rgba(10,20,38,0.7) 100%);
 }
 .feature-card:hover::before,
 .feature-card:hover::after {
     opacity: 0.7;
+    border-color: var(--cyan-bright);
+}
+.feature-card:hover .corner-tr,
+.feature-card:hover .corner-bl {
+    opacity: 0.6;
 }
 
 .feature-icon {
@@ -324,15 +520,15 @@ section[data-testid="stSidebar"] {
     line-height: 1.6;
 }
 
-/* Micro-data serial number on cards */
+/* Micro-data serial – small, monospace, low opacity, top-right */
 .feature-card-serial {
     position: absolute;
-    bottom: 8px;
-    right: 12px;
+    top: 10px;
+    right: 14px;
     font-family: var(--font-mono);
-    font-size: 0.55em;
-    color: rgba(79,195,247,0.2);
-    letter-spacing: 1px;
+    font-size: 0.48em;
+    color: rgba(79,195,247,0.18);
+    letter-spacing: 1.5px;
 }
 
 /* ── Page header ── */
@@ -532,8 +728,17 @@ _JS_COMPONENT = """
 """
 
 
+_EDGE_COORDS = """
+<div class="edge-coord tl">+47.3769 // -122.3420</div>
+<div class="edge-coord tr">ALT 408.2km // INC 51.64°</div>
+<div class="edge-coord bl">EPOCH 2026.176</div>
+<div class="edge-coord br">TLM // NOMINAL</div>
+"""
+
+
 def inject_css() -> None:
-    st.markdown(_CSS, unsafe_allow_html=True)
+    css = _CSS_TEMPLATE.replace("{{ORBITAL_BG}}", _ORBITAL_BG_URI)
+    st.markdown(css + _EDGE_COORDS, unsafe_allow_html=True)
 
 
 def inject_chat_js() -> None:

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900">
+  <!-- ═══ STARFIELD ═══ -->
+  <circle cx="45" cy="32" r="1.0" fill="#fff" opacity="0.7"/>
+  <circle cx="120" cy="78" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="210" cy="25" r="1.1" fill="#fff" opacity="0.65"/>
+  <circle cx="340" cy="55" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="480" cy="42" r="1.0" fill="#fff" opacity="0.6"/>
+  <circle cx="620" cy="18" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="780" cy="65" r="1.1" fill="#fff" opacity="0.7"/>
+  <circle cx="890" cy="30" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="1020" cy="50" r="1.0" fill="#fff" opacity="0.65"/>
+  <circle cx="1150" cy="22" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="1280" cy="70" r="1.0" fill="#fff" opacity="0.6"/>
+  <circle cx="1350" cy="35" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="85" cy="180" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="250" cy="210" r="1.0" fill="#fff" opacity="0.65"/>
+  <circle cx="380" cy="170" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="530" cy="230" r="1.1" fill="#fff" opacity="0.6"/>
+  <circle cx="700" cy="195" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="850" cy="160" r="1.0" fill="#fff" opacity="0.65"/>
+  <circle cx="1000" cy="220" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="1120" cy="185" r="1.1" fill="#fff" opacity="0.7"/>
+  <circle cx="1300" cy="200" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="60" cy="380" r="1.0" fill="#fff" opacity="0.6"/>
+  <circle cx="200" cy="420" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="350" cy="360" r="1.1" fill="#fff" opacity="0.65"/>
+  <circle cx="510" cy="400" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="660" cy="440" r="1.0" fill="#fff" opacity="0.6"/>
+  <circle cx="830" cy="370" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="980" cy="410" r="1.1" fill="#fff" opacity="0.7"/>
+  <circle cx="1100" cy="380" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="1250" cy="430" r="1.0" fill="#fff" opacity="0.65"/>
+  <circle cx="70" cy="560" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="180" cy="620" r="1.0" fill="#fff" opacity="0.5"/>
+  <circle cx="320" cy="580" r="1.1" fill="#fff" opacity="0.65"/>
+  <circle cx="470" cy="640" r="0.8" fill="#fff" opacity="0.6"/>
+  <circle cx="640" cy="570" r="1.0" fill="#fff" opacity="0.55"/>
+  <circle cx="790" cy="650" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="950" cy="590" r="1.1" fill="#fff" opacity="0.7"/>
+  <circle cx="1080" cy="620" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="1220" cy="560" r="1.0" fill="#fff" opacity="0.6"/>
+  <circle cx="1370" cy="610" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="100" cy="760" r="1.0" fill="#fff" opacity="0.65"/>
+  <circle cx="260" cy="810" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="430" cy="770" r="1.1" fill="#fff" opacity="0.6"/>
+  <circle cx="590" cy="830" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="740" cy="780" r="1.0" fill="#fff" opacity="0.65"/>
+  <circle cx="900" cy="850" r="0.8" fill="#fff" opacity="0.55"/>
+  <circle cx="1060" cy="790" r="1.1" fill="#fff" opacity="0.7"/>
+  <circle cx="1200" cy="820" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="1340" cy="760" r="1.0" fill="#fff" opacity="0.6"/>
+  <!-- Cyan accent stars – brighter -->
+  <circle cx="150" cy="120" r="1.5" fill="#4FC3F7" opacity="0.6"/>
+  <circle cx="560" cy="90" r="1.3" fill="#4FC3F7" opacity="0.5"/>
+  <circle cx="950" cy="130" r="1.6" fill="#4FC3F7" opacity="0.65"/>
+  <circle cx="1200" cy="450" r="1.3" fill="#4FC3F7" opacity="0.5"/>
+  <circle cx="300" cy="500" r="1.5" fill="#4FC3F7" opacity="0.55"/>
+  <circle cx="720" cy="700" r="1.6" fill="#4FC3F7" opacity="0.5"/>
+  <circle cx="1100" cy="750" r="1.3" fill="#4FC3F7" opacity="0.45"/>
+
+  <!-- ═══ CONSTELLATION VECTORS ═══ -->
+  <polyline points="890,30 950,130 1020,50 1150,22" fill="none" stroke="#4FC3F7" stroke-width="0.7" opacity="0.25"/>
+  <polyline points="950,130 1120,185" fill="none" stroke="#4FC3F7" stroke-width="0.6" opacity="0.18"/>
+  <polyline points="85,180 150,120 250,210 300,500" fill="none" stroke="#4FC3F7" stroke-width="0.6" opacity="0.18"/>
+  <polyline points="250,210 380,170" fill="none" stroke="#4FC3F7" stroke-width="0.6" opacity="0.2"/>
+  <polyline points="470,640 640,570 790,650 950,590" fill="none" stroke="#4FC3F7" stroke-width="0.7" opacity="0.2"/>
+  <polyline points="640,570 720,700" fill="none" stroke="#4FC3F7" stroke-width="0.6" opacity="0.15"/>
+  <polyline points="45,32 120,78 210,25" fill="none" stroke="#4FC3F7" stroke-width="0.6" opacity="0.18"/>
+
+  <!-- ═══ ORBITAL TRAJECTORIES ═══ -->
+
+  <!-- Hohmann transfer – top right -->
+  <ellipse cx="1050" cy="280" rx="200" ry="90" fill="none"
+           stroke="#4FC3F7" stroke-width="1.0" opacity="0.25"
+           transform="rotate(-25 1050 280)"/>
+  <circle cx="860" cy="310" r="3.5" fill="none" stroke="#4FC3F7" stroke-width="0.8" opacity="0.3"/>
+  <circle cx="860" cy="310" r="1.2" fill="#4FC3F7" opacity="0.4"/>
+  <text x="920" y="200" fill="#4FC3F7" opacity="0.2" font-size="7.5"
+        font-family="monospace" letter-spacing="1">
+    TRAJECTORY_OPTIMIZED // LEO-TO-GATEWAY
+  </text>
+  <text x="835" y="330" fill="#4FC3F7" opacity="0.18" font-size="6.5"
+        font-family="monospace" letter-spacing="1">
+    PERIAPSIS: 420km
+  </text>
+
+  <!-- Lunar transfer – center left -->
+  <ellipse cx="250" cy="450" rx="160" ry="70" fill="none"
+           stroke="#AB82FF" stroke-width="1.0" opacity="0.22"
+           transform="rotate(15 250 450)"/>
+  <circle cx="405" cy="430" r="3.5" fill="none" stroke="#AB82FF" stroke-width="0.8" opacity="0.25"/>
+  <circle cx="405" cy="430" r="1.2" fill="#AB82FF" opacity="0.35"/>
+  <text x="140" y="390" fill="#AB82FF" opacity="0.18" font-size="7"
+        font-family="monospace" letter-spacing="1">
+    TLI_BURN // dV 3.13 km/s
+  </text>
+  <text x="370" y="450" fill="#AB82FF" opacity="0.15" font-size="6.5"
+        font-family="monospace" letter-spacing="1">
+    APOAPSIS: 384,400km
+  </text>
+
+  <!-- LEO parking orbit – bottom right -->
+  <ellipse cx="1100" cy="650" rx="120" ry="50" fill="none"
+           stroke="#4FC3F7" stroke-width="0.9" opacity="0.2"
+           transform="rotate(-10 1100 650)"/>
+  <text x="1010" y="618" fill="#4FC3F7" opacity="0.16" font-size="6.5"
+        font-family="monospace" letter-spacing="1">
+    LEO PARKING // 405x410km
+  </text>
+
+  <!-- GTO insertion curve – top left -->
+  <path d="M 80,120 Q 200,50 350,130 T 500,100" fill="none"
+        stroke="#4FC3F7" stroke-width="0.9" opacity="0.2"/>
+  <text x="200" y="60" fill="#4FC3F7" opacity="0.16" font-size="6.5"
+        font-family="monospace" letter-spacing="1">
+    GTO INSERTION // e=0.7304
+  </text>
+
+  <!-- Mars transit arc – mid-bottom -->
+  <path d="M 500,750 Q 700,680 900,780 T 1200,720" fill="none"
+        stroke="#AB82FF" stroke-width="0.9" opacity="0.18"
+        stroke-dasharray="4 6"/>
+  <text x="680" y="698" fill="#AB82FF" opacity="0.14" font-size="6.5"
+        font-family="monospace" letter-spacing="1">
+    MARS TRANSIT WINDOW // C3 12.4 km²/s²
+  </text>
+
+  <!-- Approach vector – right edge -->
+  <path d="M 1300,400 Q 1350,300 1280,200" fill="none"
+        stroke="#4FC3F7" stroke-width="0.8" opacity="0.2"/>
+  <circle cx="1280" cy="200" r="3" fill="none" stroke="#4FC3F7" stroke-width="0.7" opacity="0.25"/>
+  <text x="1310" y="310" fill="#4FC3F7" opacity="0.14" font-size="6.5"
+        font-family="monospace" letter-spacing="1"
+        transform="rotate(-70 1310 310)">
+    APPROACH VECTOR
+  </text>
+</svg>
