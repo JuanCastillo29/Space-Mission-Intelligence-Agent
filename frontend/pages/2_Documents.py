@@ -9,7 +9,7 @@ from style import inject_css
 
 st.set_page_config(
     page_title="Documents - Space Mission Intelligence",
-    page_icon="\U0001F6F0️",
+    page_icon="\U0001f6f0️",
     layout="wide",
 )
 
@@ -73,7 +73,9 @@ if docs:
 
     col_prev, col_info, col_next = st.columns([1, 2, 1])
     with col_prev:
-        if st.button("← Previous", disabled=st.session_state.doc_page == 0, width="stretch"):
+        if st.button(
+            "← Previous", disabled=st.session_state.doc_page == 0, width="stretch"
+        ):
             st.session_state.doc_page -= 1
             st.rerun()
     with col_info:
@@ -83,7 +85,11 @@ if docs:
             unsafe_allow_html=True,
         )
     with col_next:
-        if st.button("Next →", disabled=st.session_state.doc_page >= total_pages - 1, width="stretch"):
+        if st.button(
+            "Next →",
+            disabled=st.session_state.doc_page >= total_pages - 1,
+            width="stretch",
+        ):
             st.session_state.doc_page += 1
             st.rerun()
 else:

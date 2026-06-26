@@ -22,7 +22,7 @@ _ICON_FOLDER = svg_to_img_tag("icon_folder", 14, 14)
 
 st.set_page_config(
     page_title="Chat - Space Mission Intelligence",
-    page_icon="\U0001F6F0️",
+    page_icon="\U0001f6f0️",
     layout="wide",
 )
 
@@ -55,16 +55,22 @@ with st.sidebar:
 def _render_metadata(meta: dict) -> None:
     parts = []
     if meta.get("model_name"):
-        parts.append(f'<span class="chat-meta">{_ICON_MODEL} {meta["model_name"]}</span>')
+        parts.append(
+            f'<span class="chat-meta">{_ICON_MODEL} {meta["model_name"]}</span>'
+        )
     if meta.get("query_type"):
-        parts.append(f'<span class="chat-meta">{_ICON_RADAR} {meta["query_type"]}</span>')
+        parts.append(
+            f'<span class="chat-meta">{_ICON_RADAR} {meta["query_type"]}</span>'
+        )
     latency = meta.get("latency_ms")
     if latency:
         parts.append(f'<span class="chat-meta">{_ICON_BOLT} {latency:.0f}ms</span>')
     prompt_tok = meta.get("prompt_tokens")
     comp_tok = meta.get("completion_tokens")
     if prompt_tok and comp_tok:
-        parts.append(f'<span class="chat-meta">{_ICON_TOKENS} {prompt_tok}+{comp_tok} tokens</span>')
+        parts.append(
+            f'<span class="chat-meta">{_ICON_TOKENS} {prompt_tok}+{comp_tok} tokens</span>'
+        )
     if parts:
         st.markdown(
             f'<div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">{"".join(parts)}</div>',
@@ -77,7 +83,7 @@ def _render_citations(citations: list[dict]) -> None:
         for cite in citations:
             title = cite["source_title"].replace("_", " ").title()
             section = cite.get("section_path")
-            chip = f'{_ICON_SOURCE} **[{cite["ref_index"]}]** {title}'
+            chip = f"{_ICON_SOURCE} **[{cite['ref_index']}]** {title}"
             st.markdown(chip, unsafe_allow_html=True)
             if section:
                 st.markdown(

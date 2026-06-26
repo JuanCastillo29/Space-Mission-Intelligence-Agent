@@ -8,7 +8,7 @@ from style import inject_css
 
 st.set_page_config(
     page_title="Space Mission Intelligence",
-    page_icon="\U0001F6F0️",
+    page_icon="\U0001f6f0️",
     layout="wide",
 )
 
@@ -60,7 +60,9 @@ with st.sidebar:
 
     health = api_client.check_health()
     status = health["status"]
-    api_dot = "green" if status == "healthy" else ("amber" if status == "degraded" else "red")
+    api_dot = (
+        "green" if status == "healthy" else ("amber" if status == "degraded" else "red")
+    )
     db_dot = "green" if health.get("database") else "red"
     emb_dot = "green" if health.get("embedder_loaded") else "red"
     rer_dot = "green" if health.get("reranker_loaded") else "red"
@@ -192,7 +194,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 _, center, _ = st.columns([1, 2, 1])
 with center:
     st.markdown(
-        '<div style="text-align:center; color:#8899AA; font-size:0.82em; font-family:\'Share Tech Mono\',monospace; letter-spacing:1px;">'
+        "<div style=\"text-align:center; color:#8899AA; font-size:0.82em; font-family:'Share Tech Mono',monospace; letter-spacing:1px;\">"
         '[ Select <span style="color:#4FC3F7;">CHAT</span> or '
         '<span style="color:#4FC3F7;">DOCUMENTS</span> from the sidebar to initialize ]'
         "</div>",
