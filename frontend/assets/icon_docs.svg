@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Back page -->
+  <rect x="10" y="6" width="26" height="34" rx="2" stroke="#AB82FF" stroke-width="1.5" fill="rgba(171,130,255,0.05)" opacity="0.5"/>
+  <!-- Front page -->
+  <rect x="14" y="10" width="26" height="34" rx="2" stroke="#4FC3F7" stroke-width="2" fill="rgba(79,195,247,0.08)"/>
+  <!-- Text lines -->
+  <line x1="20" y1="20" x2="34" y2="20" stroke="#4FC3F7" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <line x1="20" y1="26" x2="34" y2="26" stroke="#4FC3F7" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <line x1="20" y1="32" x2="30" y2="32" stroke="#4FC3F7" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+</svg>

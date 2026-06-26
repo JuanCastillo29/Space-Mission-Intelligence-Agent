@@ -1,4 +1,4 @@
-.PHONY: install dev lint format test test-cov ingest query serve evaluate up down build shell clean migrate seed
+.PHONY: install dev lint format test test-cov ingest query serve evaluate up down build shell clean migrate seed frontend frontend-install
 
 install:
 	pip install -r requirements/requirements.txt
@@ -57,3 +57,10 @@ clean:
 	docker compose down -v
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage
+
+# ── Frontend ──
+frontend-install:
+	pip install -r frontend/requirements.txt
+
+frontend:
+	cd frontend && streamlit run app.py
