@@ -40,6 +40,12 @@ migrate:
 seed:
 	python scripts/seed.py
 
+data-quality:
+	python -m scripts.data_quality
+
+data-quality-llm:
+	python -m scripts.data_quality --llm
+
 # ── Docker ──
 build:
 	docker compose build

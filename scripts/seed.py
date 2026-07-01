@@ -21,8 +21,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 logger = logging.getLogger(__name__)
 
 # ── Configuration ────────────────────────────────────────────────────────────
-# TODO: Replace with your Hugging Face dataset repo
-HF_DATASET_REPO = "juanc/space-mission-intelligence-data"
+HF_DATASET_REPO = "JuanCastillo29/space-mission-intelligence-data"
 HF_FILES = {
     "documents": "seed/documents.json",
     "chunks": "seed/chunks.json",

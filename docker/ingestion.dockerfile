@@ -14,7 +14,9 @@ COPY requirements/requirements.txt requirements/requirements.txt
 RUN pip install --no-cache-dir -r requirements/requirements.txt
 
 # Pre-cache the tiktoken BPE encoding so the worker runs fully offline.
-RUN python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
+ENV TIKTOKEN_CACHE_DIR=/opt/tiktoken_cache
+RUN mkdir -p $TIKTOKEN_CACHE_DIR
+COPY docker/tiktoken_cache/cl100k_base.tiktoken $TIKTOKEN_CACHE_DIR/9b5ad71b2ce5302211f9c61530b329a4922fc6a4
 
 COPY . .
 
