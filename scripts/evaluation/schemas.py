@@ -29,6 +29,7 @@ class GoldenDataset(BaseModel):
 
     version: str
     created_at: str
+    source_documents: list[str] = []
     pairs: list[GoldenQAPair]
 
 

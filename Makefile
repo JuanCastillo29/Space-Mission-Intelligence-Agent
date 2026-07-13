@@ -31,7 +31,7 @@ serve:
 	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 evaluate:
-	python -m evaluation.run
+	python -m scripts.evaluation.run
 
 # ── Database ──
 migrate:
