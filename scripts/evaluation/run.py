@@ -248,6 +248,9 @@ async def run_evaluation(
     output_dir: str | None = None,
     generate: bool = True,
     ragas_enabled: bool | None = None,
+    embedder: Embedder | None = None,
+    reranker: BGEReranker | None = None,
+    generation_pipeline: GenerationPipeline | None = None,
 ) -> list[EvalRunResult]:
     dataset = load_dataset(dataset_path or eval_settings.EVAL_DATASET_PATH)
     configs = get_configs(config_names)
@@ -255,11 +258,11 @@ async def run_evaluation(
     ragas = eval_settings.EVAL_RAGAS_ENABLED if ragas_enabled is None else ragas_enabled
     ragas = ragas and generate
 
-    # Shared across configs: embedder, reranker, generation pipeline are
-    # expensive to construct and stateless, so build them once.
-    embedder: Embedder = SentenceTransformerEmbedder()
-    reranker = BGEReranker()
-    generation_pipeline = GenerationPipeline() if generate else None
+    _embedder: Embedder = embedder or SentenceTransformerEmbedder()
+    _reranker = reranker or BGEReranker()
+    _gen_pipeline = generation_pipeline if generate else None
+    if generate and _gen_pipeline is None:
+        _gen_pipeline = GenerationPipeline()
 
     results: list[EvalRunResult] = []
     async with async_session_factory() as session:
@@ -271,9 +274,9 @@ async def run_evaluation(
                 dataset,
                 ground_truth,
                 session,
-                embedder=embedder,
-                reranker=reranker,
-                generation_pipeline=generation_pipeline,
+                embedder=_embedder,
+                reranker=_reranker,
+                generation_pipeline=_gen_pipeline,
                 k_values=eval_settings.EVAL_RETRIEVAL_K_VALUES,
                 ragas_enabled=ragas,
                 generate=generate,

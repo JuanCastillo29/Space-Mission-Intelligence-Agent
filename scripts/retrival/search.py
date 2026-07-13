@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -31,6 +32,7 @@ async def semantic_search(
     session,
     *,
     top_k: int = 20,
+    filters: Sequence[Any] | None = None,
 ) -> list[ScoredChunk]:
     distance = Chunk.embedding.cosine_distance(query_embedding)
     score = 1 - distance
@@ -39,9 +41,11 @@ async def semantic_search(
         select(Chunk, score.label("score"))
         .options(selectinload(Chunk.document))
         .where(Chunk.embedding.is_not(None))
-        .order_by(distance.asc())
-        .limit(top_k)
     )
+    if filters:
+        stmt = stmt.where(*filters)
+
+    stmt = stmt.order_by(distance.asc()).limit(top_k)
 
     result = await session.execute(stmt)
 
@@ -53,6 +57,7 @@ async def keyword_search(
     session,
     *,
     top_k: int = 20,
+    filters: Sequence[Any] | None = None,
 ) -> list[ScoredChunk]:
     ts_query = func.websearch_to_tsquery("english", query)
 
@@ -62,9 +67,11 @@ async def keyword_search(
         select(Chunk, rank.label("score"))
         .options(selectinload(Chunk.document))
         .where(Chunk.search_vector.op("@@")(ts_query))
-        .order_by(rank.desc())
-        .limit(top_k)
     )
+    if filters:
+        stmt = stmt.where(*filters)
+
+    stmt = stmt.order_by(rank.desc()).limit(top_k)
 
     result = await session.execute(stmt)
 
@@ -104,9 +111,12 @@ async def hybrid_search(
     session,
     *,
     top_k: int = 20,
+    filters: Sequence[Any] | None = None,
 ) -> list[ScoredChunk]:
-    semantic_results = await semantic_search(query_embedding, session, top_k=100)
-    keyword_results = await keyword_search(query, session, top_k=100)
+    semantic_results = await semantic_search(
+        query_embedding, session, top_k=100, filters=filters
+    )
+    keyword_results = await keyword_search(query, session, top_k=100, filters=filters)
 
     return reciprocal_rank_fusion(
         semantic_results,

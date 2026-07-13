@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from scripts.retrival.reranker import BGEReranker
 
     reranker = BGEReranker()
+    app.state.reranker = reranker
 
     from scripts.retrival.pipeline import RetrievalPipeline
 
