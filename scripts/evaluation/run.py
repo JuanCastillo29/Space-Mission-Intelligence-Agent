@@ -117,9 +117,7 @@ async def run_config(
         gt_ids = [str(u) for u in ground_truth.get(pair.query, [])]
         has_gt = bool(gt_ids)
 
-        execution = await runner.execute_query(
-            pair.query, session, generate=generate
-        )
+        execution = await runner.execute_query(pair.query, session, generate=generate)
         retrieved_ids = execution.retrieved_chunk_ids
         contexts = execution.context_texts
 
