@@ -28,9 +28,7 @@ async def resolve_ground_truth_chunk_ids(
             try:
                 resolved.append(UUID(chunk_ref))
             except ValueError:
-                stmt = select(Chunk.id).where(
-                    Chunk.content.contains(chunk_ref)
-                )
+                stmt = select(Chunk.id).where(Chunk.content.contains(chunk_ref))
                 rows = await session.execute(stmt)
                 resolved.extend(row[0] for row in rows.all())
 

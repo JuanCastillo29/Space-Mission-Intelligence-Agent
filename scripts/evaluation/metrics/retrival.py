@@ -5,10 +5,9 @@ from statistics import mean
 
 from scripts.evaluation.schemas import RetrievalMetrics
 
+
 def precision_at_k(
-        retrieval_chunks_ids: list[str],
-        ground_truth_chunks_ids: list[str],
-        k: int
+    retrieval_chunks_ids: list[str], ground_truth_chunks_ids: list[str], k: int
 ) -> float:
     """
     Precision@k = relevant retrieved in top-K / K
@@ -24,10 +23,9 @@ def precision_at_k(
 
     return relevant / k
 
+
 def recall_at_k(
-        retrieval_chunks_ids: list[str],
-        ground_truth_chunks_ids: list[str],
-        k: int
+    retrieval_chunks_ids: list[str], ground_truth_chunks_ids: list[str], k: int
 ) -> float:
     """
     Recall@k = relevant retrieved in top-K / total relevant
@@ -41,9 +39,10 @@ def recall_at_k(
     relevant = sum(chunk_id in gt for chunk_id in top_k)
     return relevant / len(gt)
 
+
 def mean_reciprocal_rank(
-        retrieval_chunks_ids: list[str],
-        ground_truth_chunks_ids: list[str],
+    retrieval_chunks_ids: list[str],
+    ground_truth_chunks_ids: list[str],
 ) -> float:
     """
     Reciprocal rank of first relevant document
@@ -52,14 +51,15 @@ def mean_reciprocal_rank(
 
     for rank, chunk_id in enumerate(retrieval_chunks_ids, start=1):
         if chunk_id in gt:
-            return 1.0/rank
+            return 1.0 / rank
 
     return 0.0
 
+
 def compute_retrieval_metrics(
-        retrieval_chunks_ids: list[str],
-        ground_truth_chunks_ids: list[str],
-        ks: tuple[int, ...] = (3, 5, 10),
+    retrieval_chunks_ids: list[str],
+    ground_truth_chunks_ids: list[str],
+    ks: tuple[int, ...] = (3, 5, 10),
 ) -> RetrievalMetrics:
     """
     Compute retrieval metrics for a single query
@@ -79,6 +79,7 @@ def compute_retrieval_metrics(
         recall_at_k=recall,
         mrr=mrr,
     )
+
 
 def aggregate_retrieval_metrics(
     metrics: list[RetrievalMetrics],
@@ -104,15 +105,9 @@ def aggregate_retrieval_metrics(
         for k, value in result.recall_at_k.items():
             recall_values[k].append(value)
 
-    avg_precision = {
-        k: mean(values)
-        for k, values in precision_values.items()
-    }
+    avg_precision = {k: mean(values) for k, values in precision_values.items()}
 
-    avg_recall = {
-        k: mean(values)
-        for k, values in recall_values.items()
-    }
+    avg_recall = {k: mean(values) for k, values in recall_values.items()}
 
     avg_mrr = mean(result.mrr for result in metrics)
 

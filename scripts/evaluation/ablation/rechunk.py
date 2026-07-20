@@ -39,9 +39,7 @@ log = logging.getLogger(__name__)
 EVAL_CHUNK_SIZE_KEY = "eval_chunk_size"
 
 
-async def _variant_exists(
-    session: AsyncSession, document_id, chunk_size: int
-) -> bool:
+async def _variant_exists(session: AsyncSession, document_id, chunk_size: int) -> bool:
     stmt = (
         select(func.count())
         .select_from(Chunk)

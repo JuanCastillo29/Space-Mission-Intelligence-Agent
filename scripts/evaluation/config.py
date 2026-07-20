@@ -9,9 +9,7 @@ class EvalSettings(BaseSettings):
     EVAL_DATASET_PATH: str = str(
         _PROJECT_ROOT / "scripts" / "evaluation" / "data" / "golden_qa.json"
     )
-    EVAL_RESULTS_DIR: str = str(
-        _PROJECT_ROOT / "scripts" / "evaluation" / "results"
-    )
+    EVAL_RESULTS_DIR: str = str(_PROJECT_ROOT / "scripts" / "evaluation" / "results")
     EVAL_RETRIEVAL_K_VALUES: list[int] = [3, 5, 10]
     EVAL_RERANK_TOP_K: int = 10
     EVAL_FINAL_TOP_K: int = 5

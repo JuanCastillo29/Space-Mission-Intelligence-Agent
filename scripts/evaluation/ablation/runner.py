@@ -57,9 +57,7 @@ class ConfigurableRetrievalPipeline(RetrievalPipeline):
         super().__init__(embedder=embedder, reranker=effective_reranker)
         self.config = config
 
-    def _build_filters(
-        self, metadata_filter: dict[str, Any] | None
-    ) -> list[Any]:
+    def _build_filters(self, metadata_filter: dict[str, Any] | None) -> list[Any]:
         filters: list[Any] = []
 
         if self.config.chunk_size_filter is not None:

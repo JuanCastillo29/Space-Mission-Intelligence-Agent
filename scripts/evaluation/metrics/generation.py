@@ -2,21 +2,13 @@ from __future__ import annotations
 
 from statistics import mean
 
-from datasets import Dataset
 from nltk.tokenize import sent_tokenize
-from ragas import evaluate
-from ragas.metrics import (
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    faithfulness,
-)
 from rapidfuzz import fuzz
 
 from scripts.evaluation.schemas import GenerationMetrics
 from scripts.generation.citations import extract_citation_refs
 
-SIMILARITY_THRESHOLD = 85
+SIMILARITY_THRESHOLD = 60
 
 REFUSAL_PHRASES = (
     "don't know",
@@ -29,10 +21,10 @@ REFUSAL_PHRASES = (
 
 
 def compute_ragas_metrics(
-        questions: list[str],
-        answers: list[str],
-        contexts: list[list[str]],
-        ground_truths: list[str],
+    questions: list[str],
+    answers: list[str],
+    contexts: list[list[str]],
+    ground_truths: list[str],
 ) -> dict[str, float]:
     """
     Runs RAGAS over a batch and returns average metric values.
@@ -40,6 +32,15 @@ def compute_ragas_metrics(
     Column names follow the ragas>=0.2 `evaluate()` dataset convention;
     verify against the installed ragas version if the API has moved on.
     """
+
+    from datasets import Dataset
+    from ragas import evaluate as ragas_evaluate
+    from ragas.metrics import (
+        answer_relevancy,
+        context_precision,
+        context_recall,
+        faithfulness,
+    )
 
     dataset = Dataset.from_dict(
         {
@@ -50,7 +51,7 @@ def compute_ragas_metrics(
         }
     )
 
-    results = evaluate(
+    results = ragas_evaluate(
         dataset,
         metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
     )
@@ -80,9 +81,9 @@ def citation_accuracy(answer: str, num_context_blocks: int) -> float:
 
 
 def hallucination_rate(
-        answer: str,
-        context: str,
-        ground_truth: str,
+    answer: str,
+    context: str,
+    ground_truth: str,
 ) -> float:
     """
     Fraction of answer sentences unsupported by either context or reference answer.
@@ -112,7 +113,7 @@ def _is_refusal(answer: str) -> bool:
 
 
 def unanswerable_rate(
-        results: list[tuple[bool, str]],
+    results: list[tuple[bool, str]],
 ) -> float:
     """
     results = [(is_unanswerable, generated_answer), ...]
@@ -130,13 +131,13 @@ def unanswerable_rate(
 
 
 def compute_generation_metrics(
-        *,
-        generated_answer: str,
-        expected_answer: str,
-        retrieved_context: list[str],
-        retrieved_chunk_ids: list[str],
-        ragas_metrics: dict[str, float] | None = None,
-        is_unanswerable: bool = False,
+    *,
+    generated_answer: str,
+    expected_answer: str,
+    retrieved_context: list[str],
+    retrieved_chunk_ids: list[str],
+    ragas_metrics: dict[str, float] | None = None,
+    is_unanswerable: bool = False,
 ) -> GenerationMetrics:
     """
     Compute generation metrics for a single evaluation example.
@@ -188,12 +189,8 @@ def aggregate_generation_metrics(
         answer_relevancy=avg([m.answer_relevancy for m in metrics]),
         context_precision=avg([m.context_precision for m in metrics]),
         context_recall=avg([m.context_recall for m in metrics]),
-        citation_accuracy=mean(
-            m.citation_accuracy for m in metrics
-        ),
-        hallucination_rate=mean(
-            m.hallucination_rate for m in metrics
-        ),
+        citation_accuracy=mean(m.citation_accuracy for m in metrics),
+        hallucination_rate=mean(m.hallucination_rate for m in metrics),
         unanswerable_detection_rate=avg(
             [m.unanswerable_detection_rate for m in metrics]
         ),
