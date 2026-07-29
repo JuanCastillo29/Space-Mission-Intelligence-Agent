@@ -1,10 +1,18 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "created_at": "2026-07-01",
   "source_documents": [
     "esa_gaia_mission_overview.pdf",
     "esa_rosetta_thermophysical_model_67p.pdf",
-    "esa_exomars_tgo_dust_storm_2018.pdf"
+    "esa_exomars_tgo_dust_storm_2018.pdf",
+    "esa_mars_express_arsia_mons_cloud",
+    "esa_juice_majis_spectral_calibration",
+    "esa_juice_pride_radio_interferometry",
+    "nasa_nuclear_thermal_propulsion_mars",
+    "arxiv_wasp121b_atmospheric_asymmetries_jwst",
+    "esa_exomars_tgo_co2_clouds",
+    "esa_rosetta_coma_evolution_67p",
+    "esa_bepicolombo_mercury_solar_wind"
   ],
   "pairs": [
     {
@@ -50,9 +58,51 @@
       "category": "single_doc_factual"
     },
     {
+      "query": "How far did the Arsia Mons elongated cloud extend, and at what velocity did it expand across the Martian mesosphere?",
+      "expected_answer": "The elongated cloud extended as far as 1800 km westward from Arsia Mons, and its westward expansion occurred at a velocity of around 170 m/s in the mesosphere, at approximately 45 km altitude over the areoid.",
+      "ground_truth_chunk_ids": ["extending as far as 1800 km westward from Arsia Mons", "velocity of around 170 m/s in the mesosphere"],
+      "difficulty": "easy",
+      "category": "single_doc_factual"
+    },
+    {
+      "query": "When was JUICE launched, when will it reach the Jovian system, and how many moon flybys are planned?",
+      "expected_answer": "JUICE was launched in April 2023 and will reach the Jovian system in July 2031. During its 3.5-year tour, 35 flybys of the 3 Galilean Moons (Callisto, Ganymede, and Europa) will be performed before entering orbit around Ganymede at the end of 2034.",
+      "ground_truth_chunk_ids": ["launched in April 2023 towards the Jovian system, which will be reached in July 2031", "35 flybys of the 3 Galilean Moons"],
+      "difficulty": "easy",
+      "category": "single_doc_factual"
+    },
+    {
+      "query": "What fuel does the Nuclear Thermal Rocket engine use, and what engine cycle does it employ?",
+      "expected_answer": "The NTR uses a compact fission reactor containing 93 percent enriched Uranium (U)-235 fuel in a Rover/NERVA-type engine operating on an expander cycle, generating hundreds of megawatts of thermal power to heat liquid hydrogen propellant.",
+      "ground_truth_chunk_ids": ["93 percent enriched", "Rover/NERVA-type engine"],
+      "difficulty": "easy",
+      "category": "single_doc_factual"
+    },
+    {
+      "query": "What instrument and grating configuration did JWST use to observe the transit of WASP-121 b, and what atmospheric asymmetry was detected?",
+      "expected_answer": "JWST observed WASP-121 b using the Near Infrared Spectrograph (NIRSpec) with the G395H grating. The observations revealed asymmetric transit light curves caused by the planet's rotation during transit, with increasing CO absorption and slightly decreasing H2O absorption in the transmission spectrum.",
+      "ground_truth_chunk_ids": ["Near Infrared Spectrograph (NIRSpec) with the G395H grating", "asymmetric transit light curves caused by the planet"],
+      "difficulty": "medium",
+      "category": "single_doc_factual"
+    },
+    {
+      "query": "How many mesospheric CO2 cloud detections were made by ACS on ExoMars TGO, and what was the size range of the aerosol particles?",
+      "expected_answer": "CO2 clouds were detected in 11 solar occultation observations at altitudes from 39 to 90 km. The effective radius of the CO2 aerosol particles ranged from 0.1 to 2.2 micrometres.",
+      "ground_truth_chunk_ids": ["CO2 clouds were detected in 11 solar occultation observations at 39-90 km altitudes", "Effective radius of CO2 aerosol particles is in range of 0.1"],
+      "difficulty": "medium",
+      "category": "single_doc_factual"
+    },
+    {
+      "query": "What ground-based instrument was used to observe comet 67P's coma during its 2021 perihelion passage, and which gas species were mapped?",
+      "expected_answer": "VLT/MUSE was used to observe comet 67P/Churyumov-Gerasimenko during its 2021 perihelion passage, generating simultaneous maps of dust, [OI], C2, NH2, and CN comae across 12 pre- and post-perihelion epochs.",
+      "ground_truth_chunk_ids": ["VLT/MUSE observations of comet 67P/Churyumov-Gerasimenko during its 2021 perihelion passage", "maps of dust, [OI], C2, NH2, and CN comae"],
+      "difficulty": "medium",
+      "category": "single_doc_factual"
+    },
+    {
       "query": "Gaia and the ExoMars Trace Gas Orbiter are both ESA missions but differ in partnership structure and timeline. How do they compare?",
       "expected_answer": "Gaia is an ESA-only mission, launched on 19 December 2013 with nominal science operations starting in mid-2014. The Trace Gas Orbiter, part of ExoMars, is instead a joint ESA-Roscosmos mission, and its science instruments (including ACS) began science operations later, in March 2018.",
-      "ground_truth_chunk_ids": ["an ESA-only mission", "TGO) ESA-Roscosmos mission", "began science operations in March 2018"],
+      "ground_truth_chunk_ids": ["selection of Gaia in 2000 as an ESA-only mission", "ESA-Roscosmos mission began science operations in March 2018"],
       "difficulty": "medium",
       "category": "cross_doc_comparison"
     },
@@ -64,16 +114,30 @@
       "category": "cross_doc_comparison"
     },
     {
+      "query": "Both the JUICE PRIDE experiment and the ExoMars ACS instrument use orbital observations to study planetary bodies, but their techniques differ fundamentally. How?",
+      "expected_answer": "PRIDE uses ground-based radio telescopes for radio interferometry (VLBI) and Doppler tracking of the JUICE spacecraft during its cruise to Jupiter, with over 35 Doppler experiments conducted in 2023-2024. In contrast, ACS on ExoMars TGO uses solar occultation spectroscopy from orbit, analyzing 1663 occultation sessions to study the Martian atmosphere. One is a ground-based radio technique; the other is a space-based infrared spectroscopic method.",
+      "ground_truth_chunk_ids": ["Planetary Radio Interferometric and Doppler Experiment (PRIDE) is one of eleven experiments", "35+ PRIDE Doppler experiments were conducted in the 2023-2024 period", "1663 solar occultation sessions"],
+      "difficulty": "hard",
+      "category": "cross_doc_comparison"
+    },
+    {
       "query": "The Gaia mission and the ExoMars ACS-MIR study both rely on spacecraft-based measurement to characterize fine-scale physical properties. How do their underlying measurement approaches differ?",
       "expected_answer": "Gaia relies on scanning space astrometry, using a slowly spinning satellite with two telescopes feeding a shared CCD focal plane to measure star transit times and derive absolute parallaxes and positions. In contrast, the ACS-MIR study relies on solar occultation spectroscopy from the Trace Gas Orbiter, analyzing the 3 micron water-ice absorption band in transmitted sunlight to retrieve vertical profiles of Martian aerosol extinction and particle size. One is a direct-imaging astrometric survey; the other is an indirect spectroscopic retrieval of atmospheric microphysics.",
-      "ground_truth_chunk_ids": ["scanning space astrometry", "ACS Mid InfraRed (MIR) channel notably provides solar occultation observations", "3 µm water ice absorption band"],
+      "ground_truth_chunk_ids": ["scanning space astrometry (Lindegren & Bastian 2011) relies on a slowly spinning satellite", "ACS Mid InfraRed (MIR) channel notably provides solar occultation observations", "water ice clouds from the 3 µm water ice absorption band"],
       "difficulty": "hard",
       "category": "multi_source_reasoning"
     },
     {
       "query": "Both the ThermoONet paper and the ACS-MIR dust storm paper study water ice, but under very different physical processes. How do the two differ?",
       "expected_answer": "ThermoONet models water ice sublimation from a cometary nucleus, where a dust mantle model with the Hertz-Knudsen sublimation formula describes how solar heating drives ice loss from the subsurface of comets like 67P. The ACS-MIR paper instead studies water ice condensation as atmospheric clouds on Mars, where the 3 micron ice absorption band is used to detect cloud particles and retrieve their size as they form in the Martian atmosphere during a global dust storm. One process is ice loss from a solid body; the other is ice formation from atmospheric vapor.",
-      "ground_truth_chunk_ids": ["Hertz-Knudsen formula", "identify water ice clouds, and constrain their particle sizes"],
+      "ground_truth_chunk_ids": ["Hertz-Knudsen formula, describing the sublimation flux", "identify water ice clouds, and constrain their particle sizes"],
+      "difficulty": "hard",
+      "category": "multi_source_reasoning"
+    },
+    {
+      "query": "The Copernicus spacecraft uses Nuclear Thermal Propulsion for fast Mars transit, while JUICE relies on conventional propulsion for its Jupiter cruise. How do their mission timelines and propulsion capabilities compare?",
+      "expected_answer": "Copernicus, powered by NTP with propellant tanks at maximum capacity of ~190 tonnes, can achieve 150-day transit times to Mars. JUICE, using conventional chemical propulsion, requires an eight-year cruise phase to reach the Jovian system. After arrival, JUICE will perform 35 flybys before entering orbit around Ganymede at the end of 2034. The NTP approach trades nuclear complexity for dramatically shorter transit times.",
+      "ground_truth_chunk_ids": ["Copernicus can achieve 150-day transit times", "propellant tanks near their maximum capacity of ~190 t", "orbit around Ganymede at the end of 2034 for about nine months"],
       "difficulty": "hard",
       "category": "multi_source_reasoning"
     },
