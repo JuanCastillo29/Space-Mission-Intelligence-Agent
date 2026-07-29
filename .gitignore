@@ -40,5 +40,8 @@ docker/volumes/
 # Data (downloaded corpora — not tracked)
 data/
 
+# Evaluation results (generated at runtime)
+scripts/evaluation/results/*.json
+
 # Jupyter
 .ipynb_checkpoints/

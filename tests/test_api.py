@@ -236,9 +236,99 @@ class TestDocuments:
 # ── Evaluate ─────────────────────────────────────────────────────────────────
 
 
+def _make_eval_run_result(config_name: str = "baseline"):
+    from scripts.evaluation.schemas import (
+        AggregateMetrics,
+        EvalRunResult,
+        GenerationMetrics,
+        RetrievalMetrics,
+        SingleEvalResult,
+    )
+
+    retrieval = RetrievalMetrics(
+        precision_at_k={3: 0.667, 5: 0.6, 10: 0.5},
+        recall_at_k={3: 0.5, 5: 0.75, 10: 1.0},
+        mrr=0.833,
+    )
+    generation = GenerationMetrics(
+        faithfulness=0.92,
+        answer_relevancy=0.88,
+        citation_accuracy=0.85,
+        hallucination_rate=0.08,
+    )
+    return EvalRunResult(
+        run_id=f"{config_name}_20260713_120000",
+        timestamp="2026-07-13T12:00:00+00:00",
+        config_name=config_name,
+        config_dict={"name": config_name},
+        aggregate_metrics=AggregateMetrics(
+            retrieval=retrieval,
+            generation=generation,
+            avg_latency_ms=250.0,
+            avg_total_tokens=400.0,
+        ),
+        per_query_results=[
+            SingleEvalResult(
+                query="What is Gaia?",
+                expected_answer="A space observatory.",
+                generated_answer="Gaia is an ESA space observatory.",
+                retrieved_chunk_ids=["abc"],
+                retrieval_metrics=retrieval,
+                generation_metrics=generation,
+                latency_ms=250.0,
+                passed=True,
+            ),
+        ],
+        total_latency_ms=250.0,
+        total_tokens=400,
+    )
+
+
 class TestEvaluate:
-    def test_stub_returns_501(self, client):
-        resp = client.post("/api/v1/evaluate")
-        assert resp.status_code == 501
+    @patch(
+        "app.routes.evaluate.run_evaluation",
+        new_callable=AsyncMock,
+    )
+    def test_post_evaluate(self, mock_run, client):
+        mock_run.return_value = [_make_eval_run_result()]
+        resp = client.post(
+            "/api/v1/evaluate",
+            json={"configs": ["baseline"]},
+        )
+        assert resp.status_code == 200
         body = resp.json()
-        assert body["status"] == "not_implemented"
+        assert body["status"] == "completed"
+        assert len(body["summaries"]) == 1
+        assert body["summaries"][0]["config_name"] == "baseline"
+        assert body["summaries"][0]["mrr"] == 0.833
+        assert body["summaries"][0]["num_passed"] == 1
+
+    @patch(
+        "app.routes.evaluate.run_evaluation",
+        new_callable=AsyncMock,
+    )
+    def test_post_invalid_config(self, mock_run, client):
+        mock_run.side_effect = KeyError("Unknown ablation config 'bad'")
+        resp = client.post(
+            "/api/v1/evaluate",
+            json={"configs": ["bad"]},
+        )
+        assert resp.status_code == 422
+
+    @patch("app.routes.evaluate.load_latest_results")
+    def test_get_results(self, mock_load, client):
+        mock_load.return_value = [_make_eval_run_result()]
+        resp = client.get("/api/v1/evaluate/results")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "ok"
+        assert len(body["summaries"]) == 1
+
+    @patch("app.routes.evaluate.load_latest_results")
+    def test_get_results_empty(self, mock_load, client):
+        mock_load.return_value = []
+        resp = client.get("/api/v1/evaluate/results")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "empty"
+        assert body["summaries"] == []
